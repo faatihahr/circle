@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int       @id @default(autoincrement())
+  username       String    @unique
+  email          String    @unique
+  password       String
+  name           String?
+  bio            String?
+  profilePicture String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  verified       Boolean   @default(false)
+  created_threads Threads[] @relation("CreatedBy")
+  updated_threads Threads[] @relation("UpdatedBy")
+  likes          Likes[]   @relation("LikedBy")
+  created_likes  Likes[]   @relation("CreatedLikes")
+  updated_likes  Likes[]   @relation("UpdatedLikes")
+  comments       Comments[] @relation("CommentedBy")
+  created_comments Comments[] @relation("CreatedComments")
+  updated_comments Comments[] @relation("UpdatedComments")
+}
+
+model Threads {
+  id                Int      @id @default(autoincrement())
+  image             String?
+  content           String?
+  number_of_replies Int?
+  created_at        DateTime @default(now())
+  created_by        Int
+  updated_at        DateTime @updatedAt
+  updated_by        Int
+  user_created      User     @relation("CreatedBy", fields: [created_by], references: [id])
+  user_updated      User     @relation("UpdatedBy", fields: [updated_by], references: [id])
+  likes             Likes[]
+  comments          Comments[]
+}
+
+model Likes {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  thread_id  Int
+  created_at DateTime @default(now())
+  created_by Int
+  updated_at DateTime @updatedAt
+  updated_by Int
+  user       User     @relation("LikedBy", fields: [user_id], references: [id])
+  user_created User   @relation("CreatedLikes", fields: [created_by], references: [id])
+  user_updated User   @relation("UpdatedLikes", fields: [updated_by], references: [id])
+  thread     Threads  @relation(fields: [thread_id], references: [id])
+  @@unique([user_id, thread_id])
+}
+
+model Comments {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  thread_id  Int
+  image      String?
+  content    String
+  created_at DateTime @default(now())
+  created_by Int
+  updated_at DateTime @updatedAt
+  updated_by Int
+  user       User     @relation("CommentedBy", fields: [user_id], references: [id])
+  user_created User   @relation("CreatedComments", fields: [created_by], references: [id])
+  user_updated User   @relation("UpdatedComments", fields: [updated_by], references: [id])
+  thread     Threads  @relation(fields: [thread_id], references: [id])
+}
