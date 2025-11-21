@@ -7,7 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import LeftSidebar from '../components/LeftSidebar';
 import RightSidebar from '../components/RightSidebar';
 import ProfileView from '../components/ProfileView';
-// import EditProfileModal from '../components/EditProfileModal';
+import EditProfileModal from '../components/EditProfileModal';
 
 const ProfilePage: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -75,7 +75,7 @@ const ProfilePage: React.FC = () => {
   const handleBack = () => {
       dispatch(deselectUser());
       dispatch(deselectThread());
-      navigate(-1); // Navigate back to the previous page (area user came from)
+      navigate('/home'); 
     };
 
   if (!userId) {
@@ -91,7 +91,7 @@ const ProfilePage: React.FC = () => {
           <div className="max-w-2xl mx-auto">
             <ProfileView onEditProfile={isOwnProfile ? openEditModal : undefined} showBackButton={true} onBack={handleBack} />
           </div>
-          {/* <EditProfileModal isOpen={isEditModalOpen} onClose={closeEditModal} /> */}
+          <EditProfileModal isOpen={isEditModalOpen} onClose={closeEditModal} />
         </div>
 
         {/* Right sidebar */}

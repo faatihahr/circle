@@ -43,6 +43,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const { user, isAuthenticated, loading } = useAppSelector((state) => state.user);
   const initializedRef = useRef(false);
 
+  // Auto-initialize auth on app mount if token exists
+  useEffect(() => {
+    if (!initializedRef.current) {
+      const token = localStorage.getItem('token');
+      if (token) {
+        dispatch(initializeAuth());
+      }
+      initializedRef.current = true;
+    }
+  }, [dispatch]);
+
 
   const handleLogin = async (data: { login: string; password: string }) => {
     await dispatch(login(data));
