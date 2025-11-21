@@ -6,7 +6,7 @@ import RightSidebar from '../components/RightSidebar';
 import PostList from '../components/PostList';
 import ThreadDetail from '../components/ThreadDetail';
 import ProfileView from '../components/ProfileView';
-// import EditProfileModal from '../components/EditProfileModal';
+import EditProfileModal from '../components/EditProfileModal';
 import { useAppSelector, useAppDispatch } from '../stores/hooks';
 import { deselectThread, deselectUser } from '../stores/postsSlice';
 
@@ -87,11 +87,11 @@ const HomePage: React.FC = () => {
 
       </div>
 
-      {/* Edit Profile Modal */}
-      {/* <EditProfileModal
+      {/* {Edit Profile Modal */} 
+       <EditProfileModal
         isOpen={showEditProfileModal}
         onClose={handleProfileModalClose}
-      /> */}
+      />
     </>
   );
 };

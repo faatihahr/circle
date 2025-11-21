@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAppSelector } from '../stores/hooks';
-// import ProfileCard from './ProfileCard';
+import ProfileCard from './ProfileCard';
 import SuggestedFriendsCard from './SuggestedFriendsCard';
 
 interface RightSidebarProps {
@@ -19,7 +19,7 @@ const RightSidebar: React.FC<RightSidebarProps> = ({ shouldShowProfileCard = tru
       {/* ProfileCard - scroll normal, tidak sticky */}
       {shouldShowProfileCardLocal && (
         <div>
-          {/* <ProfileCard /> */}
+          <ProfileCard />
         </div>
       )}
 
