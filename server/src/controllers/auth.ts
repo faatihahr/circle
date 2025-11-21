@@ -3,6 +3,7 @@ import type { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import Joi from "joi";
+import path from "path";
 
 // Joi validation schemas
 const registerSchema = Joi.object({
@@ -176,4 +177,173 @@ export const logout = async (req: Request, res: Response) => {
   // For JWT, logout is handled client-side by removing the token
   // Server-side can invalidate if needed (requires token storage/cache)
   res.json({ message: "Logout successful" });
+};
+
+export const getProfile = async (req: Request, res: Response) => {
+  const userId = (req as any).user?.userId;
+
+  if (!userId) {
+    const error = new Error("User not authenticated");
+    (error as any).status = 401;
+    throw error;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      followers: true,
+      following: true,
+    },
+  });
+
+  if (!user) {
+    const notFoundError = new Error("User not found");
+    (notFoundError as any).status = 404;
+    throw notFoundError;
+  }
+
+  res.json({
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    name: user.name,
+    bio: user.bio,
+    profilePicture: user.profilePicture,
+    image_headers: user.image_headers,
+    followersCount: user.followers.length,
+    followingCount: user.following.length,
+  });
+};
+
+const updateProfileSchema = Joi.object({
+  name: Joi.string().optional(),
+  bio: Joi.string().optional(),
+  profilePicture: Joi.string().optional(),
+  image_headers: Joi.string().optional()
+});
+
+export const updateProfile = async (req: Request, res: Response) => {
+  const { error } = updateProfileSchema.validate(req.body);
+  if (error) {
+    const validationError = new Error(error.details?.[0]?.message || 'Validation error');
+    (validationError as any).status = 400;
+    throw validationError;
+  }
+
+  const userId = (req as any).user?.userId;
+
+  if (!userId) {
+    const error = new Error("User not authenticated");
+    (error as any).status = 401;
+    throw error;
+  }
+
+  const { name, bio, profilePicture, image_headers } = req.body;
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      ...(name !== undefined && { name }),
+      ...(bio !== undefined && { bio }),
+      ...(profilePicture !== undefined && { profilePicture }),
+      ...(image_headers !== undefined && { image_headers }),
+      updatedAt: new Date()
+    },
+    include: {
+      followers: true,
+      following: true,
+    },
+  });
+
+  res.json({
+    message: "Profile updated successfully",
+    user: {
+      id: updatedUser.id,
+      username: updatedUser.username,
+      email: updatedUser.email,
+      name: updatedUser.name,
+      bio: updatedUser.bio,
+      profilePicture: updatedUser.profilePicture,
+      image_headers: updatedUser.image_headers,
+      followersCount: updatedUser.followers.length,
+      followingCount: updatedUser.following.length,
+    }
+  });
+};
+
+export const getProfileById = async (req: Request, res: Response) => {
+  const userId = parseInt(req.params.id || '');
+
+  if (!userId || isNaN(userId)) {
+    const error = new Error("Invalid user ID");
+    (error as any).status = 400;
+    throw error;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      followers: true,
+      following: true,
+    },
+  });
+
+  if (!user) {
+    const notFoundError = new Error("User not found");
+    (notFoundError as any).status = 404;
+    throw notFoundError;
+  }
+
+  res.json({
+    id: user.id,
+    username: user.username,
+    name: user.name,
+    bio: user.bio,
+    profilePicture: user.profilePicture,
+    image_headers: user.image_headers,
+    followersCount: user.followers.length,
+    followingCount: user.following.length,
+  });
+};
+
+export const uploadImage = async (req: Request, res: Response) => {
+  if (!req.file) {
+    const noFileError = new Error("No file uploaded");
+    (noFileError as any).status = 400;
+    throw noFileError;
+  }
+
+  const imageUrl = '/uploads/' + req.file.filename;
+  res.json({
+    message: "Image uploaded successfully",
+    imageUrl
+  });
+};
+
+export const getUsers = async (req: Request, res: Response) => {
+  const userId = (req as any).user?.userId;
+
+  if (!userId) {
+    const error = new Error("User not authenticated");
+    (error as any).status = 401;
+    throw error;
+  }
+
+  // Get users except self, limit to 5 for suggestions
+  const users = await prisma.user.findMany({
+    where: {
+      id: { not: userId as number }
+    },
+    select: {
+      id: true,
+      username: true,
+      name: true,
+      profilePicture: true,
+    },
+    take: 5, // limit to 5 suggestions
+  });
+
+  res.json({
+    users
+  });
 };

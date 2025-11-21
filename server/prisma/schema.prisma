@@ -1,6 +1,5 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -16,6 +15,7 @@ model User {
   name           String?
   bio            String?
   profilePicture String?
+  image_headers  String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   verified       Boolean   @default(false)
@@ -27,6 +27,9 @@ model User {
   comments       Comments[] @relation("CommentedBy")
   created_comments Comments[] @relation("CreatedComments")
   updated_comments Comments[] @relation("UpdatedComments")
+  following      Following[] @relation("Follower")
+  followers      Following[] @relation("Following")
+  notifications  Notifications[]
 }
 
 model Threads {
@@ -73,4 +76,27 @@ model Comments {
   user_created User   @relation("CreatedComments", fields: [created_by], references: [id])
   user_updated User   @relation("UpdatedComments", fields: [updated_by], references: [id])
   thread     Threads  @relation(fields: [thread_id], references: [id])
+}
+
+model Following {
+  id           Int      @id @default(autoincrement())
+  following_id Int
+  follower_id  Int
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  follower     User     @relation("Follower", fields: [follower_id], references: [id])
+  following    User     @relation("Following", fields: [following_id], references: [id])
+  @@unique([follower_id, following_id])
+}
+
+model Notifications {
+  id         Int       @id @default(autoincrement())
+  user_id    Int
+  type       String
+  message    String
+  is_read    Boolean   @default(false)
+  related_id Int?
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  user       User      @relation(fields: [user_id], references: [id])
 }

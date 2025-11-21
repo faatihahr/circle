@@ -1,98 +1,97 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { PostsProvider, usePosts } from '../contexts/PostsContext';
-import PostCard from '../components/PostCard';
-import CreatePost from '../components/CreatePost';
-import { Button } from '../components/ui/button';
-import { LogOut } from 'lucide-react';
-import PostCardSkeleton from '@/components/PostCardSkeleton';
-import { useWebSocket } from '../hooks/useWebSocket';
+import LeftSidebar from '../components/LeftSidebar';
+import RightSidebar from '../components/RightSidebar';
+import PostList from '../components/PostList';
+import ThreadDetail from '../components/ThreadDetail';
+import ProfileView from '../components/ProfileView';
+// import EditProfileModal from '../components/EditProfileModal';
+import { useAppSelector, useAppDispatch } from '../stores/hooks';
+import { deselectThread, deselectUser } from '../stores/postsSlice';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuth();
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
 
-  // Establish WebSocket connection for real-time updates
-  useWebSocket();
+  const dispatch = useAppDispatch();
+  const selectedThreadId = useAppSelector((state) => state.posts.selectedThreadId);
+  const selectedUserId = useAppSelector((state) => state.posts.selectedUserId);
+
+  // Handle profile modal based on route
+  useEffect(() => {
+    if (location.pathname === '/profile') {
+      setShowEditProfileModal(true);
+    } else {
+      setShowEditProfileModal(false);
+    }
+  }, [location.pathname]);
+
+  const handleProfileModalClose = () => {
+    setShowEditProfileModal(false);
+    navigate('/home'); // Navigate back to home when closing modal
+  };
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
   };
 
-  return (
-    <PostsProvider>
-      <div className="min-h-screen bg-card grid grid-cols-12 gap-4 p-4">
-        {/* Left sidebar */}
-        <aside className="col-span-2 bg-card p-4 rounded md:block flex flex-col">
-          <div className="mb-4 text-6xl text-primary">circle</div>
-          <div className="grow"></div>
-          <div className="text-center">
-            <Button onClick={handleLogout} variant="ghost" size="sm">
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
+  const handleBack = () => {
+    dispatch(deselectUser());
+    dispatch(deselectThread());
+  };
+
+  const renderMainContent = () => {
+    if (selectedThreadId !== null) {
+      return (
+        <>
+          <div onClick={handleBack} className="pt-5 mb-4 cursor-pointer text-xl text-foreground hover:text-foreground">
+            &larr; Back to posts
           </div>
-        </aside>
-
-        {/* Posts  */}
-        <main className="col-span-12 md:col-span-8 overflow-y-auto bg-card">
-          <div className="max-w-2xl mx-auto space-y-4 p-4">
-            <div className="flex justify-between items-center">
-              <h1 className="text-sm font-bold">Home</h1>
-            </div>
-            <CreatePost />
-            <PostsList />
-          </div>
-        </main>
-
-        {/* Right sidebar */}
-        <aside className="col-span-2 bg-card p-4 rounded hidden md:block">
-          <div className="mb-4 text-sm text-muted-foreground">Welcome, {user?.username}</div>
-        </aside>
-
-        {/* Footer */}
-        <footer className="col-span-12 bg-card p-4 border-t border-border rounded text-center">
-          <p className="text-sm text-muted-foreground">© 2025 Circle-Creted with ❤ by Faatihah</p>
-        </footer>
-      </div>
-    </PostsProvider>
-  );
-};
-
-const PostsList: React.FC = () => {
-  const { threads, loading, error } = usePosts();
-  const [showSkeleton, setShowSkeleton] = useState(false);
-
-  useEffect(() => {
-    if (loading) {
-      setShowSkeleton(true);
-    } else {
-      const timer = setTimeout(() => setShowSkeleton(false), 1500);
-      return () => clearTimeout(timer);
+          <ThreadDetail />
+        </>
+      );
     }
-  }, [loading]);
+    if (selectedUserId !== null) {
+      return (
+        <div className="max-w-2xl mx-auto">
+          <ProfileView showBackButton={true} onBack={handleBack} />
+        </div>
+      );
+    }
+    return <PostList />;
+  };
 
-  if (showSkeleton) {
-    return (
-      <>
-        {[...Array(5)].map((_, index) => (
-          <PostCardSkeleton key={index} />
-        ))}
-      </>
-    );
-  }
-
-  if (error) return <div className="text-center p-4 text-destructive">Error: {error}</div>;
-
-  if (threads.length === 0) return <div className="text-center p-4">No posts yet.</div>;
+  // Determine if we should show profile card in sidebar: hide if viewing profile
+  const shouldShowProfileCard = selectedUserId === null || selectedThreadId !== null;
 
   return (
     <>
-      {threads.map((thread) => (
-        <PostCard key={thread.id} thread={thread} />
-      ))}
+      <LeftSidebar onLogout={handleLogout} />
+
+      {/* Main container - HAPUS overflow dan gunakan flex row */}
+      <div className="min-h-screen bg-card ml-80 flex">
+
+        {/* Main content area - flex-1 agar mengambil sisa space */}
+        <div className="flex-1 border-l border-r border-white px-4 py-0">
+          {renderMainContent()}
+        </div>
+
+        {/* Right sidebar - posisi relative untuk sticky children */}
+        <div className="flex-shrink-0">
+          <RightSidebar />
+        </div>
+
+      </div>
+
+      {/* Edit Profile Modal */}
+      {/* <EditProfileModal
+        isOpen={showEditProfileModal}
+        onClose={handleProfileModalClose}
+      /> */}
     </>
   );
 };

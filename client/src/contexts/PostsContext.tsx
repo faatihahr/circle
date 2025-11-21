@@ -31,7 +31,11 @@ export const PostsProvider: React.FC<PostsProviderProps> = ({ children }) => {
   const { threads: reduxThreads, loading, error } = postsState;
   const { threads: fetchedThreads, loading: fetchLoading, error: fetchError } = useFetchPosts();
 
+  console.log('📊 PostsContext - Redux state:', { reduxThreads: reduxThreads.length, loading, error });
+  console.log('📊 PostsContext - Fetched data:', { fetchedThreads: fetchedThreads.length, fetchLoading, fetchError });
+
   useEffect(() => {
+    console.log('🚀 PostsContext: dispatching setLoading and setError');
     dispatch(setLoading(fetchLoading));
     if (fetchError) {
       dispatch(setError(fetchError));
@@ -40,6 +44,7 @@ export const PostsProvider: React.FC<PostsProviderProps> = ({ children }) => {
 
   useEffect(() => {
     if (fetchedThreads.length > 0) {
+      console.log('💾 PostsContext: dispatching setThreads with', fetchedThreads.length, 'threads');
       dispatch(setThreads(fetchedThreads));
     }
   }, [fetchedThreads, dispatch]);
@@ -49,6 +54,8 @@ export const PostsProvider: React.FC<PostsProviderProps> = ({ children }) => {
     loading,
     error,
   };
+
+  console.log('📤 PostsContext: providing value to consumers:', value);
 
   return <PostsContext.Provider value={value}>{children}</PostsContext.Provider>;
 };

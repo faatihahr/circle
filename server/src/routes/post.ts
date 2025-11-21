@@ -4,6 +4,7 @@ import {
   createPost,
   getAllPosts,
   getPostById,
+  getPostsByUserId,
   updatePost,
   deletePost
 } from '../controllers/post.js';
@@ -22,6 +23,7 @@ router.use(authenticateToken);
 router.post('/create', upload.single('image'), asyncHandler(createPost));
 router.post('/:id/like', asyncHandler(toggleLike));
 router.get('/', rateLimit, asyncHandler(getAllPosts));
+router.get('/user/:id', asyncHandler(getPostsByUserId));
 router.get('/:id', asyncHandler(getPostById));
 router.put('/:id', upload.single('image'), asyncHandler(updatePost));
 router.delete('/:id', asyncHandler(deletePost));

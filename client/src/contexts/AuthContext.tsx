@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useAppDispatch, useAppSelector } from '../stores/hooks';
-import { initializeAuth, login, register, forgotPassword, resetPassword, logout } from '../stores/userSlice';
+import { initializeAuth, login, register, forgotPassword, resetPassword, logout, getProfile } from '../stores/userSlice';
+import { addNewThread, updateThreadReplyCount } from '../stores/postsSlice';
 import { toast } from 'sonner';
 
 interface User {
@@ -9,6 +10,7 @@ interface User {
   username: string;
   email: string;
   name?: string;
+  profilePicture?: string;
 }
 
 interface AuthContextType {
@@ -39,10 +41,8 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const dispatch = useAppDispatch();
   const { user, isAuthenticated, loading } = useAppSelector((state) => state.user);
+  const initializedRef = useRef(false);
 
-  useEffect(() => {
-    dispatch(initializeAuth());
-  }, [dispatch]);
 
   const handleLogin = async (data: { login: string; password: string }) => {
     await dispatch(login(data));
@@ -77,6 +77,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     resetPassword: handleResetPassword,
     logout: handleLogout,
   };
+
+  // WebSocket setup DISABLED for debugging
+  // const wsRef = useRef<WebSocket | null>(null);
+  // const reconnectTimeoutRef = useRef<number | null>(null);
+  // const connectingRef = useRef<boolean>(false);
+
+  // useEffect(() => {
+  //   console.log('🔧 WebSocket useEffect triggered', { isAuthenticated, userId: user?.id });
+  // }, [isAuthenticated, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import prisma from '../connection/client.js';
+import { addNotificationJob } from '../services/queue.js';
 
 export const toggleLike = async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
@@ -53,6 +54,16 @@ export const toggleLike = async (req: Request, res: Response): Promise<void> => 
     });
     likesCount++;
     isLiked = true;
+
+    // Send notification to post owner if not the same user
+    if (existingPost.created_by !== userId) {
+      await addNotificationJob({
+        userId: existingPost.created_by,
+        type: 'like',
+        message: `Someone liked your post`,
+        relatedId: existingPost.id,
+      });
+    }
   }
 
   res.json({

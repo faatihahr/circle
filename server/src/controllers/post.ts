@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { createPostSchema, updatePostSchema } from '../models/post.js';
 import { broadcastWebSocketNotificationExcept } from '../app.js';
+import { addImageProcessingJob } from '../services/queue.js';
 
 export const createPost = async (req: Request, res: Response): Promise<void> => {
   const userId = parseInt(req.user?.userId || '0');
@@ -61,6 +62,20 @@ export const createPost = async (req: Request, res: Response): Promise<void> => 
     data: thread
   });
 
+  // Queue image processing for background processing if there's an image
+  if (image) {
+    try {
+      await addImageProcessingJob({
+        threadId: post.id,
+        imagePath: image,
+        userId: userId
+      });
+      console.log(`Image processing job queued for thread ${post.id}, image: ${image}`);
+    } catch (queueError) {
+      console.error('Failed to queue image processing job:', queueError);
+    }
+  }
+
   res.status(201).json({
     code: 201,
     status: "success",
@@ -85,7 +100,7 @@ export const getAllPosts = async (req: Request, res: Response): Promise<void> =>
     take: 25
   });
 
-  const threads = posts.map(post => ({
+  const threads = posts.map((post: any) => ({
     id: post.id,
     content: post.content,
     image: post.image,
@@ -99,7 +114,7 @@ export const getAllPosts = async (req: Request, res: Response): Promise<void> =>
     likes: post.likes.length,
     reply: post.comments.length,
     comments: post.comments,
-    isLiked: post.likes.some(like => like.user_id === userId)
+    isLiked: post.likes.some((like: { user_id: number }) => like.user_id === userId)
   }));
 
   res.json({
@@ -114,6 +129,8 @@ export const getAllPosts = async (req: Request, res: Response): Promise<void> =>
 
 export const getPostById = async (req: Request, res: Response): Promise<void> => {
   const { id } = req.params;
+  const userId = parseInt(req.user?.userId || '0');
+
   if (!id || isNaN(Number(id))) {
     const idError = new Error('Invalid post id');
     (idError as any).status = 400;
@@ -122,9 +139,12 @@ export const getPostById = async (req: Request, res: Response): Promise<void> =>
   const post = await prisma.threads.findUnique({
     where: { id: parseInt(id) },
     include: {
-      user_created: { select: { username: true, id: true } },
-      likes: { include: { user: { select: { username: true, id: true } } } },
-      comments: { include: { user: { select: { username: true, id: true } } } }
+      user_created: { select: { username: true, id: true, name: true, profilePicture: true } },
+      likes: { include: { user: { select: { id: true } } } },
+      comments: {
+        include: { user: { select: { username: true, id: true, name: true, profilePicture: true } } },
+        orderBy: { created_at: 'desc' }
+      }
     }
   });
 
@@ -134,7 +154,29 @@ export const getPostById = async (req: Request, res: Response): Promise<void> =>
     throw notFoundError;
   }
 
-  res.json(post);
+  const thread = {
+    id: post.id,
+    content: post.content,
+    image: post.image,
+    user: {
+      id: post.user_created.id,
+      username: post.user_created.username,
+      name: post.user_created.name != null ? post.user_created.name : post.user_created.username,
+      profile_picture: post.user_created.profilePicture
+    },
+    created_at: post.created_at,
+    likes: post.likes.length,
+    reply: post.comments.length,
+    comments: post.comments,
+    isLiked: post.likes.some((like: { user_id: number }) => like.user_id === userId)
+  };
+
+  res.json({
+    code: 200,
+    status: "success",
+    message: "Get Thread Successfully",
+    data: thread
+  });
 };
 
 export const updatePost = async (req: Request, res: Response): Promise<void> => {
@@ -250,4 +292,54 @@ export const deletePost = async (req: Request, res: Response): Promise<void> => 
   });
 
   res.json({ message: 'Post deleted successfully' });
+};
+
+export const getPostsByUserId = async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const currentUserId = parseInt(req.user?.userId || '0');
+
+  if (!id || isNaN(Number(id))) {
+    const idError = new Error('Invalid user id');
+    (idError as any).status = 400;
+    throw idError;
+  }
+
+  const posts = await prisma.threads.findMany({
+    where: { created_by: parseInt(id) },
+    include: {
+      user_created: { select: { username: true, id: true, name: true, profilePicture: true } },
+      likes: { include: { user: { select: { id: true } } } },
+      comments: {
+        include: { user: { select: { username: true, id: true, name: true, profilePicture: true } } },
+        orderBy: { created_at: 'desc' }
+      }
+    },
+    orderBy: { created_at: 'desc' }
+  });
+
+  const threads = posts.map((post: any) => ({
+    id: post.id,
+    content: post.content,
+    image: post.image,
+    user: {
+      id: post.user_created.id,
+      username: post.user_created.username,
+      name: post.user_created.name,
+      profile_picture: post.user_created.profilePicture
+    },
+    created_at: post.created_at,
+    likes: post.likes.length,
+    reply: post.comments.length,
+    comments: post.comments,
+    isLiked: post.likes.some((like: { user_id: number }) => like.user_id === currentUserId)
+  }));
+
+  res.json({
+    code: 200,
+    status: "success",
+    message: "Get User Posts Successfully",
+    data: {
+      threads
+    }
+  });
 };

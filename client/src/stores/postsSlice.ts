@@ -6,12 +6,16 @@ export interface PostsState {
   threads: Thread[];
   loading: boolean;
   error: string | null;
+  selectedThreadId: number | null;
+  selectedUserId: number | null;
 }
 
 const initialState: PostsState = {
   threads: [],
   loading: false,
   error: null,
+  selectedThreadId: null,
+  selectedUserId: null,
 };
 
 const postsSlice = createSlice({
@@ -33,6 +37,25 @@ const postsSlice = createSlice({
         thread.likes = likesCount;
       }
     },
+    updateThreadReplyCount: (state, action: PayloadAction<{ threadId: number; increment: number }>) => {
+      const { threadId, increment } = action.payload;
+      const thread = state.threads.find(t => t.id === threadId);
+      if (thread) {
+        thread.reply += increment;
+      }
+    },
+    selectThread: (state, action: PayloadAction<number>) => {
+      state.selectedThreadId = action.payload;
+    },
+    deselectThread: (state) => {
+      state.selectedThreadId = null;
+    },
+    selectUser: (state, action: PayloadAction<number>) => {
+      state.selectedUserId = action.payload;
+    },
+    deselectUser: (state) => {
+      state.selectedUserId = null;
+    },
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
     },
@@ -42,5 +65,6 @@ const postsSlice = createSlice({
   },
 });
 
-export const { setThreads, addNewThread, updateThreadLikeStatus, setLoading, setError } = postsSlice.actions;
-export default postsSlice.reducer;
+export const { setThreads, addNewThread, updateThreadLikeStatus, updateThreadReplyCount, selectThread, deselectThread, selectUser, deselectUser, setLoading, setError } = postsSlice.actions;
+
+export const postsReducer = postsSlice.reducer;

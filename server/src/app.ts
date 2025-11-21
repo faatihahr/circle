@@ -1,16 +1,18 @@
+// Load environment variables as early as possible
+import './loadEnv.js';
+
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 import authRoute from './routes/auth.js';
 import postRoute from './routes/post.js';
 import commentRoute from './routes/comment.js';
+import followRoute from './routes/follow.js';
+import { notificationQueue, imageProcessingQueue } from './services/queue.js';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import { WebSocketServer, WebSocket } from 'ws';
 import { IncomingMessage } from 'http';
 import jwt from 'jsonwebtoken';
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,34 +30,66 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'src', 'uploads')));
 app.use('/api/user', authRoute);
 app.use('/api/posts', postRoute);
 app.use('/api/comments', commentRoute);
+app.use('/api/follow', followRoute);
 
 const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
 // WebSocket server
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ server, path: '/ws' });
 
 wss.on('connection', (ws: WebSocket, request: IncomingMessage) => {
-  const token = request.url?.split('token=')[1]; // Assume token in URL params
+  try {
+    console.log('Incoming WS connection:', request.url);
+    console.log(' - headers:', request.headers);
+    const token = request.url?.split('token=')[1];
 
-  if (token) {
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret') as { userId: number };
-      const userId = decoded.userId;
-
-      clients.set(userId, ws);
-
-      ws.on('close', () => {
-        clients.delete(userId);
-      });
-
-      ws.send(JSON.stringify({ type: 'connected', message: 'WebSocket connected' }));
-    } catch (err) {
-      ws.close(1008, 'Invalid token');
+    if (!token) {
+      console.warn('WebSocket rejected: no token provided');
+      ws.close(1008, 'No token provided');
+      return;
     }
-  } else {
-    ws.close(1008, 'No token provided');
+
+    let decoded: any = null;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret');
+      console.log('WebSocket token decoded for userId:', (decoded as any).userId);
+    } catch (err) {
+      console.warn('WebSocket rejected: invalid token', err);
+      ws.close(1008, 'Invalid token');
+      return;
+    }
+
+    const userId = (decoded as any).userId;
+
+    // Close existing connection for this user
+    const existingWs = clients.get(userId);
+    if (existingWs && existingWs.readyState === WebSocket.OPEN) {
+      console.log(`Closing existing connection for user ${userId}`);
+      existingWs.close(1000, 'New connection established');
+    }
+
+    clients.set(userId, ws);
+
+    ws.on('close', (code, reason) => {
+      console.log(`WS closed for user ${userId}: code=${code} reason=${reason}`);
+      clients.delete(userId);
+    });
+
+    ws.on('error', (err) => {
+      console.error('WS error for user', userId, err);
+    });
+
+    ws.on('message', (msg) => {
+      console.log('WS message from', userId, msg.toString());
+    });
+
+    ws.send(JSON.stringify({ type: 'connected', message: 'WebSocket connected' }));
+    console.log('WebSocket connection established for user', userId);
+  } catch (err) {
+    console.error('Unexpected error in WS connection handler', err);
+    try { ws.close(1011, 'Internal error'); } catch {}
   }
 });
 

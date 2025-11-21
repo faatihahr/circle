@@ -3,6 +3,7 @@ import prisma from '../connection/client.js';
 import fs from 'fs';
 import path from 'path';
 import { createCommentSchema, updateCommentSchema } from '../models/comment.js';
+import { addNotificationJob } from '../services/queue.js';
 
 export const createComment = async (req: Request, res: Response): Promise<void> => {
   const userId = parseInt(req.user?.userId || '0');
@@ -18,7 +19,8 @@ export const createComment = async (req: Request, res: Response): Promise<void> 
 
   // Check if thread exists
   const thread = await prisma.threads.findUnique({
-    where: { id: validatedValue.thread_id }
+    where: { id: validatedValue.thread_id },
+    select: { id: true, created_by: true }
   });
 
   if (!thread) {
@@ -42,6 +44,13 @@ export const createComment = async (req: Request, res: Response): Promise<void> 
       user: { select: { username: true, id: true, name: true, profilePicture: true } },
       thread: { select: { id: true, content: true } }
     }
+  });
+
+  // Broadcast WebSocket notification to all connected clients except the commenter
+  const { broadcastWebSocketNotificationExcept } = await import('../app.js');
+  broadcastWebSocketNotificationExcept(userId, {
+    type: 'new_comment',
+    data: comment
   });
 
   res.status(201).json({

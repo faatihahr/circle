@@ -46,6 +46,37 @@ export const authAPI = {
     localStorage.removeItem('token');
     return response.data;
   },
+
+  getProfile: async () => {
+    const response = await api.get('/user/profile');
+    return response.data;
+  },
+
+  getProfileById: async (id: string) => {
+    const response = await api.get(`/user/profile/${id}`);
+    return response.data;
+  },
+
+  uploadImage: async (file: File) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    const response = await api.post('/user/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  updateProfile: async (data: { name?: string; bio?: string; profilePicture?: string; image_headers?: string }) => {
+    const response = await api.put('/user/profile', data);
+    return response.data;
+  },
+
+  getUsers: async () => {
+    const response = await api.get('/user/users');
+    return response.data;
+  },
 };
 
 // Posts API functions
@@ -83,6 +114,11 @@ export const postsAPI = {
     return response.data;
   },
 
+  getPostsByUserId: async (id: string) => {
+    const response = await api.get(`/posts/user/${id}`);
+    return response.data;
+  },
+
   toggleLike: async (id: string) => {
     const response = await api.post(`/posts/${id}/like`);
     return response.data;
@@ -91,10 +127,11 @@ export const postsAPI = {
 
 // Comments API functions
 export const commentsAPI = {
-  createComment: async (data: { threadId?: string; content?: string; image?: File }) => {
+  createComment: async (data: { threadId: string; userId: string; content: string; image?: File }) => {
     const formData = new FormData();
-    if (data.threadId) formData.append('threadId', data.threadId);
-    if (data.content) formData.append('content', data.content);
+    formData.append('thread_id', data.threadId);
+    formData.append('user_id', data.userId);
+    formData.append('content', data.content);
     if (data.image) formData.append('image', data.image);
     const response = await api.post('/comments/create', formData);
     return response.data;
@@ -120,6 +157,24 @@ export const commentsAPI = {
 
   deleteComment: async (id: string) => {
     const response = await api.delete(`/comments/${id}`);
+    return response.data;
+  },
+};
+
+// Follow API functions
+export const followAPI = {
+  followUser: async (id: string) => {
+    const response = await api.post(`/follow/${id}/follow`);
+    return response.data;
+  },
+
+  unfollowUser: async (id: string) => {
+    const response = await api.delete(`/follow/${id}/unfollow`);
+    return response.data;
+  },
+
+  getFollowStatus: async (id: string) => {
+    const response = await api.get(`/follow/${id}/status`);
     return response.data;
   },
 };
