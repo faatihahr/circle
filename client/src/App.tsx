@@ -50,15 +50,16 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 const App = () => {
   return (
     <Router>
-      <Routes>
-        <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-        <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-        <Route path="/forgotPassword" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/" element={<LandingPage />} />
-      </Routes>
-      <PostsProvider>
+      <PostsProvider> 
         <Routes>
+          {/* Public routes */}
+          <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+          <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+          <Route path="/forgotPassword" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/" element={<LandingPage />} />
+          
+          {/* Private routes */}
           <Route path="/home" element={<PrivateRoute><HomePage /></PrivateRoute>} />
           <Route path="/profile/:userId" element={<PrivateRoute><ProfileViewPage /></PrivateRoute>} />
           <Route path="/editprofile" element={<PrivateRoute><EditProfilePage /></PrivateRoute>} />

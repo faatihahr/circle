@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useAppDispatch, useAppSelector } from '../stores/hooks';
-import { initializeAuth, login, register, forgotPassword, resetPassword, logout, getProfile } from '../stores/userSlice';
-import { addNewThread, updateThreadReplyCount } from '../stores/postsSlice';
+import { initializeAuth, login, register, forgotPassword, resetPassword, logout } from '../stores/userSlice';
+// import { addNewThread, updateThreadReplyCount } from '../stores/postsSlice';
 import { toast } from 'sonner';
 
 interface User {

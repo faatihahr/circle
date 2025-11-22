@@ -4,15 +4,15 @@ import LeftSidebar from '../components/LeftSidebar';
 import RightSidebar from '../components/RightSidebar';
 import ThreadDetail from '../components/ThreadDetail';
 import { useAuth } from '../contexts/AuthContext';
-import { useAppDispatch, useAppSelector } from '../stores/hooks';
+import { useAppDispatch } from '../stores/hooks';
 import { selectThread } from '../stores/postsSlice';
 
 const ThreadPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const dispatch = useAppDispatch();
-  const selectedUserId = useAppSelector((state) => state.posts.selectedUserId);
+  // const selectedUserId = useAppSelector((state) => state.posts.selectedUserId);
 
   // Establish WebSocket connection for real-time updates
 

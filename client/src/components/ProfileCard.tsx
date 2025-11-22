@@ -16,7 +16,7 @@ const ProfileCard: React.FC<ProfileCardProps> = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { } = useFollow();
-  const { user, profile, loading, error, isAuthenticated } = useSelector((state: { user: UserState }) => state.user);
+  const { profile, loading, error, isAuthenticated } = useSelector((state: { user: UserState }) => state.user);
 
   // Listen for profileUpdate event for internal refresh
   useEffect(() => {
@@ -44,7 +44,7 @@ const ProfileCard: React.FC<ProfileCardProps> = () => {
 
   if (error) {
     return (
-      <Card className="bg-gradient-to-b from-background to-accent text-foreground shadow-lg">
+      <Card className="bg-linear-to-b from-background to-accent text-foreground shadow-lg">
         <CardContent className="p-6">
           <div>Failed to load profile: {error}</div>
         </CardContent>
@@ -58,7 +58,7 @@ const ProfileCard: React.FC<ProfileCardProps> = () => {
 
   if (loading) {
     return (
-      <Card className="bg-gradient-to-b from-background to-accent text-foreground shadow-lg">
+      <Card className="bg-linear-to-b from-background to-accent text-foreground shadow-lg">
         <CardContent className="p-6">
           <div className="animate-pulse">
             <div className="flex flex-col items-center space-y-4">
@@ -80,7 +80,7 @@ const ProfileCard: React.FC<ProfileCardProps> = () => {
 
   return (
     <Card
-      className="relative z-10 bg-gradient-to-b from-background to-accent text-foreground shadow-lg border-0 pt-0 cursor-pointer hover:shadow-xl transition-shadow"
+      className="relative z-10 bg-linear-to-b from-background to-accent text-foreground shadow-lg border-0 pt-0 cursor-pointer hover:shadow-xl transition-shadow"
       onClick={handleProfileClick}
     >
       <CardContent className="p-0">

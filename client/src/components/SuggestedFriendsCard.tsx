@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { useAuth } from '../contexts/AuthContext';
+// import { useDispatch } from 'react-redux';
+// import { useAuth } from '../contexts/AuthContext';
 import { useFollow } from '../contexts/FollowContext';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { followAPI, authAPI } from '../lib/api';
-import { updateFollowerCounts } from '../stores/userSlice';
+// import { updateFollowerCounts } from '../stores/userSlice';
 import { toast } from 'sonner';
 
 interface SuggestedUser {
@@ -19,8 +19,8 @@ interface SuggestedUser {
 
 const SuggestedFriendsCard: React.FC = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { user: currentUser } = useAuth();
+  // const dispatch = useDispatch();
+  // const { user: currentUser } = useAuth();
   const { followUser, unfollowUser } = useFollow();
   const [users, setUsers] = useState<SuggestedUser[]>([]);
 
@@ -108,7 +108,7 @@ const SuggestedFriendsCard: React.FC = () => {
               <img
                 src={user.profilePicture}
                 alt={user.name}
-                className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                className="w-10 h-10 rounded-full object-cover shrink-0"
               />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground truncate">
@@ -123,7 +123,7 @@ const SuggestedFriendsCard: React.FC = () => {
               variant={user.isFollowing ? 'outline' : 'default'}
               size="sm"
               onClick={() => handleFollowToggle(user.id)}
-              className={`flex-shrink-0 min-w-[80px] ${
+              className={`shrink-0 min-w-20 ${
                 user.isFollowing
                   ? 'bg-transparent border-border text-foreground hover:bg-accent'
                   : 'bg-primary text-primary-foreground hover:bg-primary/90'

@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react';
 import PostCard from './PostCard';
 import PostCardSkeleton from './PostCardSkeleton';
 import CreatePost from './CreatePost';
-import { ScrollArea } from './ui/scroll-area';
 import { usePosts } from '../contexts/PostsContext';
 
 const PostList: React.FC = () => {
-  const { threads, loading, error } = usePosts();
+  const { loading } = usePosts();
   const [showSkeleton, setShowSkeleton] = useState(false);
 
   useEffect(() => {

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { postsAPI } from '../lib/api';
-import { useAppSelector, useAppDispatch } from '../stores/hooks';
-import { updateThreadLikeStatus, updateThreadReplyCount, setThreads } from '../stores/postsSlice';
+import { useAppDispatch } from '../stores/hooks';
+// import { updateThreadLikeStatus, updateThreadReplyCount, setThreads } from '../stores/postsSlice';
 import { useAuth } from '../contexts/AuthContext';
-import type { Thread as ReduxThread } from '../hooks/useFetchPosts';
+// import type { Thread as ReduxThread } from '../hooks/useFetchPosts';
 
 interface Thread {
   id: number;

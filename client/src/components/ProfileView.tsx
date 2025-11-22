@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../stores/hooks';
-import { authAPI } from '../lib/api';
+// import { authAPI } from '../lib/api';
 import { useFetchUserPosts } from '../hooks/useFetchUserPosts';
 import { useAuth } from '../contexts/AuthContext';
 import { useFollow } from '../contexts/FollowContext';
@@ -34,7 +34,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, activeTab, setActiv
   return (
     <Card className="w-full shadow-lg border-0 overflow-hidden p-0">
       <CardContent className="p-0">
-        <div className="h-32 bg-gradient-to-r from-primary to-accent relative">
+        <div className="h-32 bg-linear-to-r from-primary to-accent relative">
           {user.image_headers && (
             <img
               src={`http://localhost:3000${user.image_headers}`}
@@ -129,7 +129,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ onEditProfile, showBackButton
   const navigate = useNavigate();
   // Removed: const [searchParams, setSearchParams] = useSearchParams();
 
-  const { threads: userPosts, loading: postsLoading, error, updateLikeStatus, updateReplyCount } = useFetchUserPosts(selectedUserId);
+  const { threads: userPosts, loading: postsLoading,  updateLikeStatus, updateReplyCount } = useFetchUserPosts(selectedUserId);
 
   const isOwnProfile = currentUser && selectedUserId?.toString() === currentUser.id.toString();
 
@@ -142,7 +142,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({ onEditProfile, showBackButton
   // Listen for profile updates
   useEffect(() => {
     const handleProfileUpdate = (event: CustomEvent) => {
-      const { action, userId } = event.detail;
+      const { userId } = event.detail;
       if (selectedUserId && userId === selectedUserId.toString()) {
         dispatch(getProfileById(selectedUserId.toString()));
       }

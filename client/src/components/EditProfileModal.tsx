@@ -4,7 +4,6 @@ import { useSelector } from 'react-redux';
 import { useAppDispatch } from '../stores/hooks';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Label } from './ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { authAPI } from '../lib/api';
 import { getProfile, updateProfile } from '../stores/userSlice';
@@ -19,7 +18,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose }) 
   const dispatch = useAppDispatch();
   
   // Selector langsung dari Redux
-  const { user, profile, loading, isAuthenticated } = useSelector((state: { user: UserState }) => state.user);
+  const { profile, loading, isAuthenticated } = useSelector((state: { user: UserState }) => state.user);
   
   const [saving, setSaving] = useState(false);
   const [editedData, setEditedData] = useState({
@@ -165,7 +164,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose }) 
 
         {/* Header Banner with change image overlay */}
         <div
-          className="h-32 bg-gradient-to-r from-primary to-accent relative cursor-pointer group"
+          className="h-32 bg-linear-to-r from-primary to-accent relative cursor-pointer group"
           onClick={handleHeaderImageChange}
         >
           {editedData.image_headers && (

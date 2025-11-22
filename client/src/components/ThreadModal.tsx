@@ -124,7 +124,7 @@ const ThreadModal: React.FC<ThreadModalProps> = ({ thread, isOpen, onClose }) =>
             {/* Right side - Thread content and replies */}
             <div className="flex-1 p-6 overflow-hidden flex flex-col">
               {/* Thread content */}
-              <Card className="mb-4 bg-card-post border-2 border-white flex-shrink-0">
+              <Card className="mb-4 bg-card-post border-2 border-white shrink-0">
                 <CardContent className="p-4">
                   <div className="flex items-start space-x-3">
                     <Avatar>

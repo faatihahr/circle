@@ -18,12 +18,12 @@ const ThreadDetail: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const selectedThreadId = useAppSelector((state: RootState) => state.posts.selectedThreadId);
-  const threads = useAppSelector((state: RootState) => state.posts.threads);
+  // const threads = useAppSelector((state: RootState) => state.posts.threads);
 
   const [thread, setThread] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [localLikeState, setLocalLikeState] = useState<{ isLiked: boolean; likesCount: number } | null>(null);
+  // const [localLikeState, setLocalLikeState] = useState<{ isLiked: boolean; likesCount: number } | null>(null);
 
   const { comments, loading: commentsLoading, refetch: refetchComments } = useFetchComments(selectedThreadId!, selectedThreadId !== null);
   const { user } = useAuth();
@@ -111,7 +111,7 @@ const ThreadDetail: React.FC = () => {
       <Card className="mb-4 bg-card-post border-2 border-white">
         <CardContent className="p-4 w-full">
           <div className="flex items-start space-x-3">
-            <Avatar className="flex-shrink-0">
+            <Avatar className="shrink-0">
               <AvatarImage
                 src={(thread.user.id.toString() === user?.id && user?.profilePicture) ? `http://localhost:3000${user.profilePicture}` : (thread.user.profile_picture ? `http://localhost:3000${thread.user.profile_picture}` : undefined)}
                 alt={thread.user.username}
@@ -124,7 +124,7 @@ const ThreadDetail: React.FC = () => {
                 <span className="text-muted-foreground text-sm">@{thread.user.username}</span>
                 <span className="text-muted-foreground text-xs">· {new Date(thread.created_at).toLocaleDateString()}</span>
               </div>
-              <p className="mt-2 text-sm break-words">{thread.content}</p>
+              <p className="mt-2 text-sm wrap-break-word">{thread.content}</p>
               
               {thread.image ? (
                 <img

@@ -16,7 +16,7 @@ const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const selectedUserId = useAppSelector((state) => state.posts.selectedUserId);
-  const [profileUser, setProfileUser] = useState<any>(null);
+  const [ setProfileUser] = useState<any>(null);
   const isOwnProfile = user?.id?.toString() === userId;
   const isEditModalOpen = searchParams.get('edit') === 'true';
 
@@ -95,8 +95,8 @@ const ProfilePage: React.FC = () => {
         </div>
 
         {/* Right sidebar */}
-        <div className="flex-shrink-0">
-          <RightSidebar />
+        <div className="shrink-0">
+          <RightSidebar shouldShowProfileCard={false}/>
         </div>
 
       </div>

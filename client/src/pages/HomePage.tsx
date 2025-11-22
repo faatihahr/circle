@@ -13,7 +13,7 @@ import { deselectThread, deselectUser } from '../stores/postsSlice';
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
 
   const dispatch = useAppDispatch();
@@ -81,8 +81,8 @@ const HomePage: React.FC = () => {
         </div>
 
         {/* Right sidebar - posisi relative untuk sticky children */}
-        <div className="flex-shrink-0">
-          <RightSidebar />
+        <div className="shrink-0">
+          <RightSidebar shouldShowProfileCard={shouldShowProfileCard} />
         </div>
 
       </div>
