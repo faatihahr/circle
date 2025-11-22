@@ -1,3 +1,4 @@
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from './ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -249,5 +250,6 @@ const PostCard: React.FC<PostCardProps> = ({ thread, onLikeUpdate, onReplyUpdate
     </>
   );
 };
+
 
 export default PostCard;

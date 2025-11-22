@@ -90,8 +90,19 @@ export const postsAPI = {
     return response.data;
   },
 
-  getAllPosts: async () => {
-    const response = await api.get('/posts');
+  // UPDATE: Support cursor dan limit untuk pagination
+  getAllPosts: async (cursor?: number, limit?: number) => {
+    let url = '/posts'; 
+    const params: string[] = [];
+    
+    if (cursor !== undefined && cursor !== null) params.push(`cursor=${cursor}`);
+    if (limit !== undefined) params.push(`limit=${limit}`);
+    
+    if (params.length > 0) {
+      url += '?' + params.join('&');
+    }
+    
+    const response = await api.get(url);
     return response.data;
   },
 
@@ -124,6 +135,7 @@ export const postsAPI = {
     return response.data;
   },
 };
+
 
 // Comments API functions
 export const commentsAPI = {
@@ -175,6 +187,16 @@ export const followAPI = {
 
   getFollowStatus: async (id: string) => {
     const response = await api.get(`/follow/${id}/status`);
+    return response.data;
+  },
+
+  getFollowers: async (id: string) => {
+    const response = await api.get(`/follow/${id}/followers`);
+    return response.data;
+  },
+
+  getFollowing: async (id: string) => {
+    const response = await api.get(`/follow/${id}/following`);
     return response.data;
   },
 };

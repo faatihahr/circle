@@ -167,3 +167,89 @@ export const getFollowStatus = async (req: Request, res: Response): Promise<void
     data: { isFollowing }
   });
 };
+
+export const getFollowers = async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+  if (!id) {
+    const idError = new Error('User id param missing');
+    (idError as any).status = 400;
+    throw idError;
+  }
+  const userId = parseInt(id);
+
+  if (!userId || isNaN(userId)) {
+    const idError = new Error('Invalid user id');
+    (idError as any).status = 400;
+    throw idError;
+  }
+
+  // Get all followers for this user
+  const followers = await prisma.following.findMany({
+    where: {
+      following_id: userId
+    },
+    include: {
+      follower: {
+        select: {
+          id: true,
+          username: true,
+          name: true,
+          profilePicture: true
+        }
+      }
+    },
+    orderBy: { created_at: 'desc' }
+  });
+
+  const followerUsers = followers.map(f => f.follower);
+
+  res.json({
+    code: 200,
+    status: "success",
+    message: "Followers retrieved successfully",
+    data: followerUsers
+  });
+};
+
+export const getFollowing = async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+  if (!id) {
+    const idError = new Error('User id param missing');
+    (idError as any).status = 400;
+    throw idError;
+  }
+  const userId = parseInt(id);
+
+  if (!userId || isNaN(userId)) {
+    const idError = new Error('Invalid user id');
+    (idError as any).status = 400;
+    throw idError;
+  }
+
+  // Get all users this user is following
+  const following = await prisma.following.findMany({
+    where: {
+      follower_id: userId
+    },
+    include: {
+      following: {
+        select: {
+          id: true,
+          username: true,
+          name: true,
+          profilePicture: true
+        }
+      }
+    },
+    orderBy: { created_at: 'desc' }
+  });
+
+  const followingUsers = following.map(f => f.following);
+
+  res.json({
+    code: 200,
+    status: "success",
+    message: "Following retrieved successfully",
+    data: followingUsers
+  });
+};

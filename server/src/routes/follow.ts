@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { followUser, unfollowUser, getFollowStatus } from '../controllers/follow.js';
+import { followUser, unfollowUser, getFollowStatus, getFollowers, getFollowing } from '../controllers/follow.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { asyncHandler, handleError } from '../middleware/handlingError.js';
 
@@ -12,6 +12,8 @@ router.use(authenticateToken);
 router.post('/:id/follow', asyncHandler(followUser));
 router.delete('/:id/unfollow', asyncHandler(unfollowUser));
 router.get('/:id/status', asyncHandler(getFollowStatus));
+router.get('/:id/followers', asyncHandler(getFollowers));
+router.get('/:id/following', asyncHandler(getFollowing));
 
 // Use error handling middleware
 router.use(handleError);
