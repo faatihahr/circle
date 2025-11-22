@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useAppDispatch } from '../stores/hooks';
 import { followAPI } from '../lib/api';
+import { updateFollowStatus } from '../stores/followSlice';
 import LeftSidebar from '../components/LeftSidebar';
 import RightSidebar from '../components/RightSidebar';
 import { Button } from '../components/ui/button';
@@ -17,6 +19,7 @@ interface User {
 
 const FollowsPage: React.FC = () => {
   const navigate = useNavigate();
+  const reduxDispatch = useAppDispatch();
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<'following' | 'followers'>('following');
   const [following, setFollowing] = useState<User[]>([]);
@@ -87,6 +90,7 @@ const FollowsPage: React.FC = () => {
   const handleFollow = async (targetUserId: number) => {
     try {
       await followAPI.followUser(targetUserId.toString());
+      reduxDispatch(updateFollowStatus({ userId: targetUserId, isFollowing: true }));
       toast.success('User followed!');
       fetchData(); // Refresh the lists and status
     } catch (error) {
@@ -98,6 +102,7 @@ const FollowsPage: React.FC = () => {
   const handleUnfollow = async (targetUserId: number) => {
     try {
       await followAPI.unfollowUser(targetUserId.toString());
+      reduxDispatch(updateFollowStatus({ userId: targetUserId, isFollowing: false }));
       toast.success('User unfollowed!');
       fetchData(); // Refresh the lists and status
     } catch (error) {
@@ -217,7 +222,7 @@ const FollowsPage: React.FC = () => {
 
         {/* Right sidebar */}
         <div className="shrink-0">
-          <RightSidebar shouldShowProfileCard={false} />
+          <RightSidebar shouldShowProfileCard={true} />
         </div>
       </div>
     </>
