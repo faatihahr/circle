@@ -123,7 +123,7 @@ const FollowsPage: React.FC = () => {
     return (
       <div className="space-y-4">
         {users.map((u) => (
-          <div key={u.id} className="flex items-center justify-between p-4 rounded-lg border">
+          <div key={u.id} className="flex items-center justify-between p-4 rounded-lg">
             <div className="flex items-center space-x-3">
               <Avatar className="w-12 h-12">
                 <AvatarImage src={`http://localhost:3000${u.profilePicture}`} alt={u.name || u.username} />
@@ -175,14 +175,14 @@ const FollowsPage: React.FC = () => {
       <div className="min-h-screen bg-card ml-80 flex">
         {/* Main content */}
         <div className="flex-1 border-l border-r border-white px-4 py-0">
-          <div className="max-w-2xl mx-auto">
+          <div className="max-w-full mx-auto">
             <div className="pt-4">
               <h1 className="text-2xl font-bold mb-6">Follows</h1>
 
               {/* Tab buttons */}
-              <div className="flex border-b mb-6">
+              <div className="flex border-b border-white mb-6">
                 <button
-                  className={`px-6 py-3 font-medium text-sm ${
+                  className={`flex-1 py-4 text-center font-medium text-sm ${
                     activeTab === 'following'
                       ? 'border-b-2 border-primary text-primary'
                       : 'text-muted-foreground hover:text-foreground'
@@ -192,7 +192,7 @@ const FollowsPage: React.FC = () => {
                   Following ({following.length})
                 </button>
                 <button
-                  className={`px-6 py-3 font-medium text-sm ${
+                  className={`flex-1 py-4 text-center font-medium text-sm ${
                     activeTab === 'followers'
                       ? 'border-b-2 border-primary text-primary'
                       : 'text-muted-foreground hover:text-foreground'
