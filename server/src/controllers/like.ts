@@ -57,11 +57,34 @@ export const toggleLike = async (req: Request, res: Response): Promise<void> => 
 
     // Send notification to post owner if not the same user
     if (existingPost.created_by !== userId) {
+      // Get liker user data for personalized message
+      const likerUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { username: true }
+      });
+
       await addNotificationJob({
         userId: existingPost.created_by,
         type: 'like',
-        message: `Someone liked your post`,
+        message: `${likerUser?.username || 'Someone'} liked your post`,
         relatedId: existingPost.id,
+      });
+      // Send real-time notification via WebSocket
+      const { sendWebSocketNotification } = await import('../app.js');
+      sendWebSocketNotification(existingPost.created_by, {
+        type: 'notification',
+        data: {
+          id: `temp-${Date.now()}`, // temporary ID, real DB ID comes later
+          type: 'like',
+          message: `${likerUser?.username || 'Someone'} liked your post`,
+          is_read: false,
+          related_id: existingPost.id,
+          created_at: new Date().toISOString()
+        }
+      });
+      console.log('🐛 DEBUG WebSocket notification sent:', {
+        to: existingPost.created_by,
+        message: `${likerUser?.username || 'Someone'} liked your post`
       });
     }
   }

@@ -20,7 +20,7 @@ export const imageProcessingQueue = new Bull('image_processing', {
 // Job types
 export interface NotificationJobData {
   userId: number;
-  type: 'like' | 'comment' | 'follow' | 'new_post';
+  type: 'like' | 'comment' | 'follow' | 'new_post' | 'comment_like';
   message: string;
   relatedId: number | null;
 }

@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import prisma from '../connection/client.js';
 import { broadcastWebSocketNotificationExcept } from '../app.js';
+import { addNotificationJob } from '../services/queue.js';
 
 export const followUser = async (req: Request, res: Response): Promise<void> => {
   const userId = parseInt(req.user?.userId || '0');
@@ -67,6 +68,28 @@ export const followUser = async (req: Request, res: Response): Promise<void> => 
   broadcastWebSocketNotificationExcept(userId, {
     type: 'follow_update',
     data: { followerId: userId, followedId: followingId, action: 'follow' }
+  });
+
+  // Add notification to the followed user
+  await addNotificationJob({
+    userId: followingId,
+    type: 'follow',
+    message: `${follow.follower.username} started following you`,
+    relatedId: userId, // follower id
+  });
+
+  // Send real-time notification via WebSocket
+  const { sendWebSocketNotification } = await import('../app.js');
+  sendWebSocketNotification(followingId, {
+    type: 'notification',
+    data: {
+      id: `temp-follow-${Date.now()}`, // temporary ID, real DB ID comes later
+      type: 'follow',
+      message: `${follow.follower.username} started following you`,
+      is_read: false,
+      related_id: userId, // follower id
+      created_at: new Date().toISOString()
+    }
   });
 
   res.status(201).json({

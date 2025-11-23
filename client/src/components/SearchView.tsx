@@ -337,7 +337,7 @@ export default function SearchView() {
             variant="ghost"
             onClick={() => handleTabChange(id)}
             className={cn(
-              'flex-1 min-w-[80px] items-center justify-center space-x-2 px-6 py-3 rounded-none border-b-2 border-transparent hover:bg-muted/50',
+              'flex-1 min-w-20 items-center justify-center space-x-2 px-6 py-3 rounded-none border-b-2 border-transparent hover:bg-muted/50',
               activeTab === id && 'border-primary text-primary'
             )}
           >

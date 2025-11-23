@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useAppDispatch } from '../stores/hooks';
 import { addNewThread, updateThreadReplyCount } from '../stores/postsSlice';
 import { getProfile } from '../stores/userSlice';
+import { addNotification } from '../stores/notificationsSlice';
 
 export const useWebSocket = () => {
   const { user, isAuthenticated } = useAuth();
@@ -46,6 +47,10 @@ export const useWebSocket = () => {
         // Emit custom event for viewed user refetch
         const customEvent = new CustomEvent('followUpdate', { detail: { followedId, followerId, action } });
         window.dispatchEvent(customEvent);
+      } else if (message.type === 'notification' && message.data) {
+        // Add real-time notification to the store
+        dispatch(addNotification(message.data));
+        console.log('🐛 DEBUG WebSocket notification received:', message.data.message);
       }
     } catch (error) {
       console.error('Error parsing WebSocket message:', error);

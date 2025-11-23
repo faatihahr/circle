@@ -224,3 +224,5 @@ export const searchAPI = {
     return response.data;
   },
 };
+
+export { api };

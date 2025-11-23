@@ -80,6 +80,30 @@ export const createComment = async (req: Request, res: Response): Promise<void> 
     data: comment
   });
 
+  // Send notification to post owner if not self-comment
+  if (comment.user_id !== thread.created_by) {
+    await addNotificationJob({
+      userId: thread.created_by,
+      type: 'comment',
+      message: `${comment.user.username} commented on your post`,
+      relatedId: comment.thread_id,
+    });
+
+    // Send real-time notification via WebSocket
+    const { sendWebSocketNotification } = await import('../app.js');
+    sendWebSocketNotification(thread.created_by, {
+      type: 'notification',
+      data: {
+        id: `temp-comment-${Date.now()}`,
+        type: 'comment',
+        message: `${comment.user.username} commented on your post`,
+        is_read: false,
+        related_id: comment.thread_id,
+        created_at: new Date().toISOString()
+      }
+    });
+  }
+
   res.status(201).json({
     code: 201,
     status: "success",
@@ -375,6 +399,36 @@ export const toggleCommentLike = async (req: Request, res: Response): Promise<vo
       }
     });
     isLiked = true;
+
+    // Send notification to comment owner if not self-like
+    if (comment.user_id !== userId) {
+      // Get liker user data for personalized message
+      const likerUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { username: true }
+      });
+
+      await addNotificationJob({
+        userId: comment.user_id,
+        type: 'comment_like',
+        message: `${likerUser?.username || 'Someone'} liked your comment`,
+        relatedId: comment.thread_id, // link to thread
+      });
+
+      // Send real-time notification via WebSocket
+      const { sendWebSocketNotification } = await import('../app.js');
+      sendWebSocketNotification(comment.user_id, {
+        type: 'notification',
+        data: {
+          id: `temp-comment-like-${Date.now()}`,
+          type: 'comment_like',
+          message: `${likerUser?.username || 'Someone'} liked your comment`,
+          is_read: false,
+          related_id: comment.thread_id, // link to thread
+          created_at: new Date().toISOString()
+        }
+      });
+    }
   }
 
   // Get updated like count

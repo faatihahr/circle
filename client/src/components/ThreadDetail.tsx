@@ -10,7 +10,6 @@ import type { RootState } from '../stores/store';
 import { postsAPI, commentsAPI } from '../lib/api';
 import { toast } from 'sonner';
 import ReplyForm from './ReplyForm';
-import { useFetchComments, type Comment as FlatComment } from '../hooks/useFetchComments';
 import { useAuth } from '../contexts/AuthContext';
 
 // Extended Comment type for nested replies
@@ -351,7 +350,7 @@ const ThreadDetail: React.FC = () => {
                   · {new Date(thread.created_at).toLocaleDateString()}
                 </span>
               </div>
-              <p className="mt-2 text-sm break-words">{thread.content}</p>
+              <p className="mt-2 text-sm wrap-break-word">{thread.content}</p>
 
               {thread.image && (
                 <img

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useAppDispatch, useAppSelector } from '../stores/hooks';
 import { initializeAuth, login, register, forgotPassword, resetPassword, logout } from '../stores/userSlice';
+import { fetchNotifications } from '../stores/notificationsSlice';
 // import { addNewThread, updateThreadReplyCount } from '../stores/postsSlice';
 import { toast } from 'sonner';
 
@@ -53,6 +54,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       initializedRef.current = true;
     }
   }, [dispatch]);
+
+  // Auto-fetch notifications when user becomes authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      dispatch(fetchNotifications({ page: 1, limit: 10 }));
+    }
+  }, [isAuthenticated, user, dispatch]);
 
 
   const handleLogin = async (data: { login: string; password: string }) => {

@@ -13,6 +13,7 @@ import EditProfilePage from './pages/EditProfilePage';
 import ProfileViewPage from './pages/ProfilePage';
 import FollowsPage from './pages/FollowsPage';
 import SearchPage from './pages/SearchPage';
+import NotificationsPage from './pages/NotificationsPage';
 import { Toaster } from './components/ui/sonner';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -68,6 +69,7 @@ const App = () => {
           <Route path="/editprofile" element={<PrivateRoute><EditProfilePage /></PrivateRoute>} />
           <Route path="/thread/:id" element={<PrivateRoute><ThreadPage /></PrivateRoute>} />
           <Route path="/search" element={<PrivateRoute><SearchPage /></PrivateRoute>} />
+          <Route path="/notifications" element={<PrivateRoute><NotificationsPage /></PrivateRoute>} />
         </Routes>
       {/* </PostsProvider> */}
       <Toaster />
