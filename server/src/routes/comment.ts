@@ -5,7 +5,8 @@ import {
   getCommentsByThread,
   getCommentById,
   updateComment,
-  deleteComment
+  deleteComment,
+  toggleCommentLike
 } from '../controllers/comment.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { upload } from '../middleware/upload.js';
@@ -22,6 +23,7 @@ router.get('/threads/:threadId', asyncHandler(getCommentsByThread));
 router.get('/:id', asyncHandler(getCommentById));
 router.put('/:id', upload.single('image'), asyncHandler(updateComment));
 router.delete('/:id', asyncHandler(deleteComment));
+router.post('/:commentId/like', asyncHandler(toggleCommentLike));
 
 // Use error handling middleware
 router.use(handleError);

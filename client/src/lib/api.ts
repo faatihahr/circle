@@ -139,11 +139,12 @@ export const postsAPI = {
 
 // Comments API functions
 export const commentsAPI = {
-  createComment: async (data: { threadId: string; userId: string; content: string; image?: File }) => {
+  createComment: async (data: { threadId: string; userId: string; content: string; parentId?: string; image?: File }) => {
     const formData = new FormData();
     formData.append('thread_id', data.threadId);
     formData.append('user_id', data.userId);
     formData.append('content', data.content);
+    if (data.parentId) formData.append('parent_id', data.parentId);
     if (data.image) formData.append('image', data.image);
     const response = await api.post('/comments/create', formData);
     return response.data;
@@ -169,6 +170,11 @@ export const commentsAPI = {
 
   deleteComment: async (id: string) => {
     const response = await api.delete(`/comments/${id}`);
+    return response.data;
+  },
+
+  toggleCommentLike: async (commentId: string) => {
+    const response = await api.post(`/comments/${commentId}/like`);
     return response.data;
   },
 };

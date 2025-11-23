@@ -30,6 +30,7 @@ model User {
   following      Following[] @relation("Follower")
   followers      Following[] @relation("Following")
   notifications  Notifications[]
+  comment_likes  CommentLikes[] // Likes on comments
 }
 
 model Threads {
@@ -62,10 +63,21 @@ model Likes {
   @@unique([user_id, thread_id])
 }
 
+model CommentLikes {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  comment_id Int
+  created_at DateTime @default(now())
+  user       User     @relation(fields: [user_id], references: [id])
+  comment    Comments @relation(fields: [comment_id], references: [id])
+  @@unique([user_id, comment_id])
+}
+
 model Comments {
   id         Int      @id @default(autoincrement())
   user_id    Int
   thread_id  Int
+  parent_id  Int?     // For nested comments
   image      String?
   content    String
   created_at DateTime @default(now())
@@ -76,6 +88,9 @@ model Comments {
   user_created User   @relation("CreatedComments", fields: [created_by], references: [id])
   user_updated User   @relation("UpdatedComments", fields: [updated_by], references: [id])
   thread     Threads  @relation(fields: [thread_id], references: [id])
+  parent     Comments? @relation("CommentReplies", fields: [parent_id], references: [id])
+  replies    Comments[] @relation("CommentReplies") // Nested replies
+  comment_likes CommentLikes[] // Likes for comments
 }
 
 model Following {

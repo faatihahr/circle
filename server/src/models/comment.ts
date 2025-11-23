@@ -3,6 +3,7 @@ import Joi from 'joi';
 export const createCommentSchema = Joi.object({
   thread_id: Joi.number().integer().required(),
   user_id: Joi.number().integer().required(),
+  parent_id: Joi.number().integer().optional().allow(null),
   image: Joi.string().optional(),
   content: Joi.string().required(),
 });
@@ -16,6 +17,7 @@ export interface IComment {
   id: number;
   user_id: number;
   thread_id: number;
+  parent_id?: number | null;
   image?: string;
   content: string;
   created_at: Date;
@@ -27,6 +29,7 @@ export interface IComment {
 export interface ICreateComment {
   thread_id: number;
   user_id: number;
+  parent_id?: number;
   image?: string;
   content: string;
 }

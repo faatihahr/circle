@@ -8,6 +8,7 @@ interface CreateCommentData {
   threadId: string;
   userId: string;
   content: string;
+  parentId?: string;
   image?: File;
 }
 
@@ -27,6 +28,7 @@ export const useCreateComment = () => {
         threadId: data.threadId,
         userId: data.userId,
         content: data.content.trim(),
+        parentId: data.parentId,
         image: data.image
       });
 

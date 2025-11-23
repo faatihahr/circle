@@ -35,6 +35,7 @@ export const createComment = async (req: Request, res: Response): Promise<void> 
     data: {
       user_id: validatedValue.user_id,
       thread_id: validatedValue.thread_id,
+      parent_id: validatedValue.parent_id || null, // Support nested comments
       image,
       content: validatedValue.content,
       created_by: userId,
@@ -42,7 +43,14 @@ export const createComment = async (req: Request, res: Response): Promise<void> 
     },
     include: {
       user: { select: { username: true, id: true, name: true, profilePicture: true } },
-      thread: { select: { id: true, content: true } }
+      thread: { select: { id: true, content: true } },
+      parent: { // Include parent comment info
+        select: {
+          id: true,
+          content: true,
+          user: { select: { username: true, name: true } }
+        }
+      }
     }
   });
 
@@ -80,10 +88,21 @@ export const getCommentsByThread = async (req: Request, res: Response): Promise<
     throw notFoundError;
   }
 
-  const comments = await prisma.comments.findMany({
-    where: { thread_id: parseInt(threadId) },
+  // Get only top-level comments (no parent)
+  const topLevelComments = await prisma.comments.findMany({
+    where: {
+      thread_id: parseInt(threadId),
+      parent_id: null // Only top-level comments
+    },
     include: {
-      user: { select: { username: true, id: true, name: true, profilePicture: true } }
+      user: { select: { username: true, id: true, name: true, profilePicture: true } },
+      replies: {
+        include: {
+          user: { select: { username: true, id: true, name: true, profilePicture: true } },
+          replies: true // Support nested replies up to 2 levels
+        },
+        orderBy: { created_at: 'asc' }
+      }
     },
     orderBy: { created_at: 'desc' }
   });
@@ -93,8 +112,8 @@ export const getCommentsByThread = async (req: Request, res: Response): Promise<
     status: "success",
     message: "Get comments successfully",
     data: {
-      comments,
-      count: comments.length
+      comments: topLevelComments,
+      count: topLevelComments.length
     }
   });
 };
@@ -248,5 +267,78 @@ export const deleteComment = async (req: Request, res: Response): Promise<void> 
     code: 200,
     status: "success",
     message: 'Comment deleted successfully'
+  });
+};
+
+export const toggleCommentLike = async (req: Request, res: Response): Promise<void> => {
+  const userId = parseInt(req.user?.userId || '0');
+  const { commentId } = req.params;
+
+  if (!commentId || isNaN(Number(commentId))) {
+    const idError = new Error('Invalid comment id');
+    (idError as any).status = 400;
+    throw idError;
+  }
+
+  // Check if comment exists
+  const comment = await prisma.comments.findUnique({
+    where: { id: parseInt(commentId) }
+  });
+
+  if (!comment) {
+    const commentError = new Error('Comment not found');
+    (commentError as any).status = 404;
+    throw commentError;
+  }
+
+  // Check if user already liked this comment
+  const existingLike = await prisma.commentLikes.findUnique({
+    where: {
+      user_id_comment_id: {
+        user_id: userId,
+        comment_id: parseInt(commentId)
+      }
+    }
+  });
+
+  let isLiked: boolean;
+  if (existingLike) {
+    // Unlike - delete the like
+    await prisma.commentLikes.delete({
+      where: { id: existingLike.id }
+    });
+    isLiked = false;
+  } else {
+    // Like - create new like
+    await prisma.commentLikes.create({
+      data: {
+        user_id: userId,
+        comment_id: parseInt(commentId)
+      }
+    });
+    isLiked = true;
+  }
+
+  // Get updated like count
+  const likeCount = await prisma.commentLikes.count({
+    where: { comment_id: parseInt(commentId) }
+  });
+
+  // Broadcast WebSocket notification
+  const { broadcastWebSocketNotificationExcept } = await import('../app.js');
+  broadcastWebSocketNotificationExcept(userId, {
+    type: existingLike ? 'unliked_comment' : 'liked_comment',
+    data: { commentId, isLiked, likesCount: likeCount }
+  });
+
+  res.json({
+    code: 200,
+    status: "success",
+    message: isLiked ? "Comment liked successfully" : "Comment unliked successfully",
+    data: {
+      commentId: parseInt(commentId),
+      isLiked,
+      likesCount: likeCount
+    }
   });
 };

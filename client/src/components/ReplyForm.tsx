@@ -9,10 +9,11 @@ import { useCreateComment } from '../hooks/useCreateComment';
 
 interface ReplyFormProps {
   threadId: number;
+  parentId?: number;
   onReplySuccess?: () => void;
 }
 
-const ReplyForm: React.FC<ReplyFormProps> = ({ threadId, onReplySuccess }) => {
+const ReplyForm: React.FC<ReplyFormProps> = ({ threadId, parentId, onReplySuccess }) => {
   const { user } = useAuth();
   const { createComment, loading } = useCreateComment();
   const [content, setContent] = useState('');
@@ -44,6 +45,7 @@ const ReplyForm: React.FC<ReplyFormProps> = ({ threadId, onReplySuccess }) => {
       threadId: threadId.toString(),
       userId: user.id.toString(),
       content,
+      parentId: parentId ? parentId.toString() : undefined,
       image: image || undefined
     });
     if (newComment) {
