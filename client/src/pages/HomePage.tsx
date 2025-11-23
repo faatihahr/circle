@@ -6,9 +6,10 @@ import RightSidebar from '../components/RightSidebar';
 import PostList from '../components/PostList';
 import ThreadDetail from '../components/ThreadDetail';
 import ProfileView from '../components/ProfileView';
+import SearchView from '../components/SearchView';
 import EditProfileModal from '../components/EditProfileModal';
 import { useAppSelector, useAppDispatch } from '../stores/hooks';
-import { deselectThread, deselectUser } from '../stores/postsSlice';
+import { deselectThread, deselectUser, setSearchMode } from '../stores/postsSlice';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ const HomePage: React.FC = () => {
   const dispatch = useAppDispatch();
   const selectedThreadId = useAppSelector((state) => state.posts.selectedThreadId);
   const selectedUserId = useAppSelector((state) => state.posts.selectedUserId);
+  const searchMode = useAppSelector((state) => state.posts.searchMode);
 
   // Handle profile modal based on route
   useEffect(() => {
@@ -42,6 +44,7 @@ const HomePage: React.FC = () => {
   const handleBack = () => {
     dispatch(deselectUser());
     dispatch(deselectThread());
+    dispatch(setSearchMode(false));
   };
 
   const renderMainContent = () => {
@@ -61,6 +64,9 @@ const HomePage: React.FC = () => {
           <ProfileView showBackButton={true} onBack={handleBack} />
         </div>
       );
+    }
+    if (searchMode) {
+      return <SearchView />;
     }
     return <PostList />;
   };

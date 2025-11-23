@@ -8,6 +8,7 @@ import authRoute from './routes/auth.js';
 import postRoute from './routes/post.js';
 import commentRoute from './routes/comment.js';
 import followRoute from './routes/follow.js';
+import searchRoute from './routes/search.js';
 import { notificationQueue, imageProcessingQueue } from './services/queue.js';
 import cors from 'cors';
 import { WebSocketServer, WebSocket } from 'ws';
@@ -31,6 +32,7 @@ app.use('/api/user', authRoute);
 app.use('/api/posts', postRoute);
 app.use('/api/comments', commentRoute);
 app.use('/api/follow', followRoute);
+app.use('/api/search', searchRoute);
 
 const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

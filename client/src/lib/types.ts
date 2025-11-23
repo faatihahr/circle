@@ -13,3 +13,19 @@ export interface Thread {
   reply: number;
   isLiked: boolean;
 }
+
+export interface SearchUser {
+  id: number;
+  username: string;
+  name: string;
+  bio: string | null;
+  profilePicture: string | null;
+  followersCount: number;
+  followingCount: number;
+}
+
+export interface SearchResult {
+  type: 'user' | 'post';
+  user?: SearchUser;
+  post?: Thread;
+}

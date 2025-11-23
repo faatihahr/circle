@@ -12,6 +12,7 @@ import ThreadPage from './pages/ThreadPage';
 import EditProfilePage from './pages/EditProfilePage';
 import ProfileViewPage from './pages/ProfilePage';
 import FollowsPage from './pages/FollowsPage';
+import SearchPage from './pages/SearchPage';
 import { Toaster } from './components/ui/sonner';
 
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -59,13 +60,14 @@ const App = () => {
           <Route path="/forgotPassword" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/" element={<LandingPage />} />
-          
+
           {/* Private routes */}
           <Route path="/home" element={<PrivateRoute><HomePage /></PrivateRoute>} />
           <Route path="/follows" element={<PrivateRoute><FollowsPage /></PrivateRoute>} />
           <Route path="/profile/:userId" element={<PrivateRoute><ProfileViewPage /></PrivateRoute>} />
           <Route path="/editprofile" element={<PrivateRoute><EditProfilePage /></PrivateRoute>} />
           <Route path="/thread/:id" element={<PrivateRoute><ThreadPage /></PrivateRoute>} />
+          <Route path="/search" element={<PrivateRoute><SearchPage /></PrivateRoute>} />
         </Routes>
       {/* </PostsProvider> */}
       <Toaster />

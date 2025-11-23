@@ -3,6 +3,16 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import { postsAPI } from '../lib/api';
 import type { Thread } from '../lib/types';
 
+export interface SearchUser {
+  id: number;
+  username: string;
+  name?: string;
+  profilePicture?: string;
+  bio?: string;
+  followersCount: number;
+  followingCount: number;
+}
+
 export interface PostsState {
   threads: Thread[];
   loading: boolean;
@@ -12,6 +22,15 @@ export interface PostsState {
   nextCursor: number | null; // TAMBANG: ID post terakhir untuk cursor pagination
   selectedThreadId: number | null;
   selectedUserId: number | null;
+  // Search states
+  searchMode: boolean;
+  searchQuery: string;
+  searchTab: 'all' | 'users' | 'posts';
+  searchResults: {
+    users: SearchUser[];
+    threads: Thread[];
+  };
+  searchLoading: boolean;
 }
 
 const initialState: PostsState = {
@@ -23,6 +42,15 @@ const initialState: PostsState = {
   nextCursor: null,
   selectedThreadId: null,
   selectedUserId: null,
+  // Search initial state
+  searchMode: false,
+  searchQuery: '',
+  searchTab: 'all',
+  searchResults: {
+    users: [],
+    threads: [],
+  },
+  searchLoading: false,
 };
 
 // Thunk untuk fetch posts awal (sudah ada, tetap)
@@ -102,6 +130,29 @@ const postsSlice = createSlice({
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
     },
+    // Search reducers
+    setSearchMode: (state, action: PayloadAction<boolean>) => {
+      state.searchMode = action.payload;
+      if (!action.payload) {
+        // Reset search state when disabling search mode
+        state.searchQuery = '';
+        state.searchResults = { users: [], threads: [] };
+        state.searchLoading = false;
+        state.searchTab = 'all';
+      }
+    },
+    setSearchQuery: (state, action: PayloadAction<string>) => {
+      state.searchQuery = action.payload;
+    },
+    setSearchTab: (state, action: PayloadAction<'all' | 'users' | 'posts'>) => {
+      state.searchTab = action.payload;
+    },
+    setSearchResults: (state, action: PayloadAction<{ users: SearchUser[]; threads: Thread[] }>) => {
+      state.searchResults = action.payload;
+    },
+    setSearchLoading: (state, action: PayloadAction<boolean>) => {
+      state.searchLoading = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -150,7 +201,12 @@ export const {
   selectUser,
   deselectUser,
   setLoading,
-  setError
+  setError,
+  setSearchMode,
+  setSearchQuery,
+  setSearchTab,
+  setSearchResults,
+  setSearchLoading
 } = postsSlice.actions;
 
 export const postsReducer = postsSlice.reducer;

@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { Button } from './ui/button';
-import { LogOut, Home, User, Heart, UserCircle } from 'lucide-react';
-import { selectUser, deselectThread, deselectUser } from '../stores/postsSlice';
+import { LogOut, Home, Search as SearchIcon, Heart, UserCircle } from 'lucide-react';
+import { selectUser, deselectThread, deselectUser, setSearchMode } from '../stores/postsSlice';
 import { useAuth } from '../contexts/AuthContext';
 
 interface LeftSidebarProps {
@@ -38,6 +38,14 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ onLogout }) => {
     navigate('/follows');
   };
 
+  const handleSearchClick = () => {
+    // Reset other selections and enable search mode
+    dispatch(deselectUser());
+    dispatch(deselectThread());
+    dispatch(setSearchMode(true));
+    navigate('/home'); // Ensure we're on home page
+  };
+
   return (
     <aside className="w-80 bg-card overflow-y-auto md:block flex flex-col h-screen fixed left-0 border-r border-white">
       <div className="p-4 flex flex-col h-full">
@@ -47,8 +55,8 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ onLogout }) => {
             <Home className="w-5 h-5 mr-2" />
             Home
           </button>
-          <button className="!bg-transparent !border-0 rounded-lg w-full flex items-center justify-start h-12 px-6 !text-card-foreground hover:!bg-primary/10 hover:!text-primary !transition-colors !duration-200">
-            <User className="w-5 h-5 mr-2" />
+          <button className="!bg-transparent !border-0 rounded-lg w-full flex items-center justify-start h-12 px-6 !text-card-foreground hover:!bg-primary/10 hover:!text-primary !transition-colors !duration-200" onClick={handleSearchClick}>
+            <SearchIcon className="w-5 h-5 mr-2" />
             Search
           </button>
           <button

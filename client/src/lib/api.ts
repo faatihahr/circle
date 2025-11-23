@@ -200,3 +200,21 @@ export const followAPI = {
     return response.data;
   },
 };
+
+// Search API functions
+export const searchAPI = {
+  searchUsers: async (query: string) => {
+    const response = await api.get(`/search/users?q=${encodeURIComponent(query)}`);
+    return response.data;
+  },
+
+  searchPosts: async (query: string) => {
+    const response = await api.get(`/search/posts?q=${encodeURIComponent(query)}`);
+    return response.data;
+  },
+
+  searchAll: async (query: string) => {
+    const response = await api.get(`/search/all?q=${encodeURIComponent(query)}`);
+    return response.data;
+  },
+};
