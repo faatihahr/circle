@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Users, MessageSquare, Loader2 } from 'lucide-react';
+import { Search, Users, MessageSquare, Loader2, ArrowLeft } from 'lucide-react';
 import SearchBar from './SearchBar';
 import { searchAPI } from '../lib/api';
 import type { Thread } from '../lib/types';
@@ -113,7 +113,7 @@ export default function SearchView() {
   };
 
   const renderUserCard = (user: SearchUser) => (
-    <Card key={user.id} className="hover:shadow-md transition-shadow">
+    <Card key={user.id} className="hover:shadow-md transition-shadow border-white">
       <CardContent className="p-4">
         <div className="flex items-center space-x-3">
           <Avatar className="h-12 w-12">
@@ -189,10 +189,10 @@ export default function SearchView() {
   );
 
   const renderEmptyState = () => (
-    <div className="text-center py-12">
-      <Search className="mx-auto h-12 w-12 text-muted-foreground/50" />
-      <h3 className="mt-4 text-lg font-medium">Tidak ada hasil ditemukan</h3>
-      <p className="text-muted-foreground mt-2">
+    <div className="border-2 border-dashed border-muted-foreground/20 rounded-xl p-12 text-center bg-muted/5">
+      <Search className="mx-auto h-16 w-16 text-muted-foreground/30 mb-4" />
+      <h3 className="text-xl font-semibold text-foreground mb-2">Tidak ada hasil ditemukan</h3>
+      <p className="text-muted-foreground">
         Coba kata kunci yang berbeda atau periksa ejaan Anda.
       </p>
     </div>
@@ -283,11 +283,8 @@ export default function SearchView() {
                       <p className="text-sm font-medium line-clamp-2">{post.content}</p>
                     </div>
                   </div>
+
                 )}
-                <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
-                  <span>❤️ {post.likes}</span>
-                  <span>💬 {post.reply}</span>
-                </div>
               </div>
             ))}
           </div>
@@ -307,15 +304,18 @@ export default function SearchView() {
   return (
     <div className="space-y-6">
       {/* Back button */}
-      <div onClick={() => dispatch(setSearchMode(false))} className="cursor-pointer text-xl text-foreground hover:text-foreground">
-        ← Back to home
+      <div
+        onClick={() => dispatch(setSearchMode(false))}
+        className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-muted/50 transition-colors"
+      >
+        <ArrowLeft className="w-5 h-5" />
+        <span className="pt-2 text-2xl font-medium">Back to home</span>
       </div>
 
       {/* Search Bar */}
       <div>
         <SearchBar
           onSearch={handleSearch}
-          className="max-w-md"
           placeholder="Cari users, posts..."
         />
       </div>
@@ -323,21 +323,21 @@ export default function SearchView() {
       {/* Search Query */}
       {searchQuery && (
         <div className="text-center">
-          <h1 className="text-2xl font-bold">
+          <h2 className="text-base font-medium">
             Hasil pencarian untuk "{searchQuery}"
-          </h1>
+          </h2>
         </div>
       )}
 
       {/* Tabs */}
-      <div className="flex border-b border-border">
+      <div className="flex gap-3 border-b border-white">
         {tabs.map(({ id, label, icon: Icon }) => (
           <Button
             key={id}
             variant="ghost"
             onClick={() => handleTabChange(id)}
             className={cn(
-              'flex items-center space-x-2 px-6 py-3 rounded-none border-b-2 border-transparent hover:bg-muted/50',
+              'flex-1 min-w-[80px] items-center justify-center space-x-2 px-6 py-3 rounded-none border-b-2 border-transparent hover:bg-muted/50',
               activeTab === id && 'border-primary text-primary'
             )}
           >
@@ -373,8 +373,31 @@ export default function SearchView() {
           {activeTab === 'posts' && (
             <div>
               {searchResults.threads.length > 0 ? (
-                <div className="space-y-2">
-                  {searchResults.threads.map(renderPostCard)}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {searchResults.threads.map(post => (
+                    <div
+                      key={post.id}
+                      className="cursor-pointer group"
+                      onClick={() => window.location.href = `/thread/${post.id}`}
+                    >
+                      {post.image ? (
+                        <div className="aspect-square rounded-lg overflow-hidden bg-muted">
+                          <img
+                            src={`http://localhost:3000${post.image}`}
+                            alt="Post image"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                          />
+                        </div>
+                      ) : (
+                        <div className="aspect-square rounded-lg bg-muted flex items-center justify-center p-4">
+                          <div className="text-center">
+                            <MessageSquare className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                            <p className="text-sm font-medium line-clamp-2">{post.content}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               ) : renderEmptyState()}
             </div>
