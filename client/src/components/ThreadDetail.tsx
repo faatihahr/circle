@@ -29,6 +29,12 @@ interface NestedComment {
     profilePicture?: string;
     id: number;
   };
+  parent?: {
+    id: number;
+    user: {
+      username: string;
+    };
+  };
   replies?: NestedComment[];
   comment_likes?: any[];
 }
@@ -39,9 +45,10 @@ interface CommentItemProps {
   depth: number;
   onReplyToggle: (commentId: number | null) => void;
   replyingTo: number | null;
+  onReplySuccess: () => void;
 }
 
-const CommentItem: React.FC<CommentItemProps> = ({ comment, depth, onReplyToggle, replyingTo }) => {
+const CommentItem: React.FC<CommentItemProps> = ({ comment, depth, onReplyToggle, replyingTo, onReplySuccess }) => {
   const { user } = useAuth();
   const [likesCount, setLikesCount] = useState(comment.comment_likes?.length || 0);
   const [isLiked, setIsLiked] = useState(comment.comment_likes?.some(like => like.user_id === user?.id) || false);
@@ -105,9 +112,9 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, depth, onReplyToggle
               <span className={`text-muted-foreground ${isNested ? 'text-xs' : 'text-sm'}`}>
                 · {new Date(comment.created_at).toLocaleDateString()}
               </span>
-              {isNested && (
+              {isNested && comment.parent?.user?.username && (
                 <span className="px-2 py-0.5 bg-primary/20 text-primary text-xs rounded-full font-medium">
-                  Nested Reply
+                  Reply to @{comment.parent.user.username}
                 </span>
               )}
             </div>
@@ -175,7 +182,7 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, depth, onReplyToggle
             parentId={comment.id}
             onReplySuccess={() => {
               onReplyToggle(null);
-              window.location.reload();
+              onReplySuccess();
             }}
           />
         </div>
@@ -191,6 +198,7 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, depth, onReplyToggle
               depth={depth + 1}
               onReplyToggle={onReplyToggle}
               replyingTo={replyingTo}
+              onReplySuccess={onReplySuccess}
             />
           ))}
         </div>
@@ -267,10 +275,17 @@ const ThreadDetail: React.FC = () => {
 
   const handleReplySuccess = () => {
     if (selectedThreadId) {
-      commentsAPI.getCommentsByThread(selectedThreadId.toString())
-        .then(response => {
-          if (response.code === 200) {
-            setNestedComments(response.data.comments);
+      // Refresh both comments and thread data to update reply count
+      Promise.all([
+        commentsAPI.getCommentsByThread(selectedThreadId.toString()),
+        postsAPI.getPostById(selectedThreadId.toString())
+      ])
+        .then(([commentsResponse, threadResponse]) => {
+          if (commentsResponse.code === 200) {
+            setNestedComments(commentsResponse.data.comments);
+          }
+          if (threadResponse.code === 200) {
+            setThread(threadResponse.data);
           }
         })
         .catch(() => toast.error('Failed to refresh comments'));
@@ -358,7 +373,7 @@ const ThreadDetail: React.FC = () => {
                 </Button>
                 <Button variant="ghost" size="sm" className="p-0 h-auto hover:bg-transparent">
                   <MessageCircle className="h-4 w-4 mr-1" />
-                  <span className="text-xs">{thread.replies || 0}</span>
+                  <span className="text-xs">{thread.reply || 0}</span>
                 </Button>
               </div>
             </div>
@@ -387,6 +402,7 @@ const ThreadDetail: React.FC = () => {
                 depth={0}
                 onReplyToggle={setReplyingTo}
                 replyingTo={replyingTo}
+                onReplySuccess={handleReplySuccess}
               />
             ))}
           </div>

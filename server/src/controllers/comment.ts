@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { createCommentSchema, updateCommentSchema } from '../models/comment.js';
 import { addNotificationJob } from '../services/queue.js';
+import redisClient from '../connection/redis.js';
 
 export const createComment = async (req: Request, res: Response): Promise<void> => {
   const userId = parseInt(req.user?.userId || '0');
@@ -54,6 +55,24 @@ export const createComment = async (req: Request, res: Response): Promise<void> 
     }
   });
 
+  // Invalidate cache untuk thread setelah create comment
+  try {
+    await redisClient.keys(`posts:${validatedValue.thread_id}:*`).then(async (keys) => {
+      if (keys.length > 0) {
+        await redisClient.del(keys);
+        console.log(`Invalidated cache for thread ${validatedValue.thread_id} after create comment`);
+      }
+    });
+    // Juga invalidate feed cache agar reply count di homepage terupdate
+    await redisClient.keys('posts:all:*').then(async (keys) => {
+      if (keys.length > 0) {
+        await redisClient.del(keys);
+      }
+    });
+  } catch (cacheError) {
+    console.log('Failed to invalidate cache after create comment:', cacheError);
+  }
+
   // Broadcast WebSocket notification to all connected clients except the commenter
   const { broadcastWebSocketNotificationExcept } = await import('../app.js');
   broadcastWebSocketNotificationExcept(userId, {
@@ -99,10 +118,28 @@ export const getCommentsByThread = async (req: Request, res: Response): Promise<
       replies: {
         include: {
           user: { select: { username: true, id: true, name: true, profilePicture: true } },
-          replies: true // Support nested replies up to 2 levels
+          parent: {
+            select: {
+              id: true,
+              user: { select: { username: true } }
+            }
+          },
+          replies: {
+            include: {
+              user: { select: { username: true, id: true, name: true, profilePicture: true } },
+              parent: {
+                select: {
+                  id: true,
+                  user: { select: { username: true } }
+                }
+              }
+            },
+            orderBy: { created_at: 'asc' }
+          } // Support nested replies up to 2 levels
         },
         orderBy: { created_at: 'asc' }
-      }
+      },
+      comment_likes: true
     },
     orderBy: { created_at: 'desc' }
   });
@@ -258,10 +295,31 @@ export const deleteComment = async (req: Request, res: Response): Promise<void> 
     }
   }
 
+  // Get thread ID before deleting comment for cache invalidation
+  const threadId = existingComment.thread_id;
+
   // Delete comment
   await prisma.comments.delete({
     where: { id: parseInt(id) }
   });
+
+  // Invalidate cache untuk thread setelah delete comment
+  try {
+    await redisClient.keys(`posts:${threadId}:*`).then(async (keys) => {
+      if (keys.length > 0) {
+        await redisClient.del(keys);
+        console.log(`Invalidated cache for thread ${threadId} after delete comment`);
+      }
+    });
+    // Juga invalidate feed cache agar reply count di homepage terupdate
+    await redisClient.keys('posts:all:*').then(async (keys) => {
+      if (keys.length > 0) {
+        await redisClient.del(keys);
+      }
+    });
+  } catch (cacheError) {
+    console.log('Failed to invalidate cache after delete comment:', cacheError);
+  }
 
   res.json({
     code: 200,
