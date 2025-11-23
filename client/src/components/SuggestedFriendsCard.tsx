@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../stores/hooks';
 import { useFollow } from '../contexts/FollowContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { followAPI, authAPI } from '../lib/api';
 import { updateFollowStatus, updateMultipleFollowStatuses } from '../stores/followSlice';
 import { toast } from 'sonner';
@@ -20,45 +22,62 @@ const SuggestedFriendsCard: React.FC = () => {
   const navigate = useNavigate();
   const reduxDispatch = useAppDispatch();
   const { followUser, unfollowUser } = useFollow();
+  const { user } = useAuth();
   const [users, setUsers] = useState<SuggestedUser[]>([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Get follow statuses from Redux
   const followStatuses = useAppSelector((state: RootState) => state.follow.followStatuses);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await authAPI.getUsers();
-        const fetchedUsers = response.users as SuggestedUser[];
-        setUsers(fetchedUsers);
+  const fetchUsers = async () => {
+    try {
+      const response = await authAPI.getUsers();
+      const fetchedUsers = response.users as SuggestedUser[];
+      
+      // Update local state
+      setUsers(fetchedUsers);
 
-        // Also refresh follow statuses in Redux
-        if (fetchedUsers.length > 0) {
-          const statusPromises = fetchedUsers.map(async (user) => {
-            try {
-              const statusResponse = await followAPI.getFollowStatus(user.id.toString());
-              return { userId: user.id, isFollowing: statusResponse.data.isFollowing };
-            } catch (error) {
-              console.error(`Failed to fetch follow status for user ${user.id}`, error);
-              return { userId: user.id, isFollowing: false };
-            }
-          });
+      // Also refresh follow statuses in Redux
+      if (fetchedUsers.length > 0) {
+        const statusPromises = fetchedUsers.map(async (user) => {
+          try {
+            const statusResponse = await followAPI.getFollowStatus(user.id.toString());
+            return { userId: user.id, isFollowing: statusResponse.data.isFollowing };
+          } catch (error) {
+            console.error(`Failed to fetch follow status for user ${user.id}`, error);
+            return { userId: user.id, isFollowing: false };
+          }
+        });
 
-          const statuses = await Promise.all(statusPromises);
-          const statusMap: Record<number, boolean> = {};
-          statuses.forEach(({ userId, isFollowing }) => {
-            statusMap[userId] = isFollowing;
-          });
+        const statuses = await Promise.all(statusPromises);
+        const statusMap: Record<number, boolean> = {};
+        statuses.forEach(({ userId, isFollowing }) => {
+          statusMap[userId] = isFollowing;
+        });
 
-          reduxDispatch(updateMultipleFollowStatuses(statusMap));
-        }
-      } catch (error) {
-        console.error('Failed to fetch suggested users', error);
+        reduxDispatch(updateMultipleFollowStatuses(statusMap));
       }
-    };
+    } catch (error) {
+      console.error('Failed to fetch suggested users', error);
+    }
+  };
 
+  useEffect(() => {
     fetchUsers();
   }, [reduxDispatch]);
+
+  // Trigger refresh when current user updates their profile
+  useEffect(() => {
+    if (user?.profilePicture) {
+      // Force refresh data after a short delay to allow backend updates to propagate
+      const timer = setTimeout(() => {
+        setRefreshTrigger(prev => prev + 1);
+        fetchUsers(); // Re-fetch with fresh data
+      }, 2000); // Wait 2 seconds for backend to process
+
+      return () => clearTimeout(timer);
+    }
+  }, [user?.profilePicture]);
 
   const handleFollowToggle = async (userId: number, userName: string) => {
     const isCurrentlyFollowing = followStatuses[userId] || false;
@@ -98,17 +117,24 @@ const SuggestedFriendsCard: React.FC = () => {
           className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
           onClick={() => handleProfileClick(user.id)}
         >
-          <img
-            src={user.profilePicture}
-            alt={user.name}
-            className="w-10 h-10 rounded-full object-cover shrink-0"
-          />
+          {/* Fixed Avatar with absolute URL prefix and fallback */}
+          <Avatar className="w-10 h-10 border-2 border-background">
+            <AvatarImage 
+              src={user.profilePicture ? `http://localhost:3000${user.profilePicture}?t=${Date.now()}` : undefined}
+              alt={user.name}
+              onError={(e) => console.log('Avatar load failed:', user.profilePicture)} // Debug logging
+            />
+            <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+              {user.name?.charAt(0).toUpperCase() || user.username.charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground truncate">
-              {user.name}
+              {user.name || user.username}
             </p>
             <p className="text-xs text-muted-foreground truncate">
-              {user.username}
+              @{user.username}
             </p>
           </div>
         </div>
@@ -143,3 +169,170 @@ const SuggestedFriendsCard: React.FC = () => {
 };
 
 export default SuggestedFriendsCard;
+
+// import React, { useState, useEffect } from 'react';
+// import { useNavigate } from 'react-router-dom';
+// import { useAppDispatch, useAppSelector } from '../stores/hooks';
+// import { useFollow } from '../contexts/FollowContext';
+// import { useAuth } from '../contexts/AuthContext';
+// import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+// import { Button } from './ui/button';
+// import { followAPI, authAPI } from '../lib/api';
+// import { updateFollowStatus, updateMultipleFollowStatuses } from '../stores/followSlice';
+// import { toast } from 'sonner';
+// import type { RootState } from '../stores/store';
+
+// interface SuggestedUser {
+//   id: number;
+//   name: string;
+//   username: string;
+//   profilePicture: string;
+// }
+
+// const SuggestedFriendsCard: React.FC = () => {
+//   const navigate = useNavigate();
+//   const reduxDispatch = useAppDispatch();
+//   const { followUser, unfollowUser } = useFollow();
+//   const { user } = useAuth();
+//   const [users, setUsers] = useState<SuggestedUser[]>([]);
+//   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+//   // Get follow statuses from Redux
+//   const followStatuses = useAppSelector((state: RootState) => state.follow.followStatuses);
+
+//   const fetchUsers = async (forceRefresh = false) => {
+//     try {
+//       const response = await authAPI.getUsers();
+//       const fetchedUsers = response.users as SuggestedUser[];
+      
+//       // Update local state
+//       setUsers(fetchedUsers);
+
+//       // Also refresh follow statuses in Redux
+//       if (fetchedUsers.length > 0) {
+//         const statusPromises = fetchedUsers.map(async (user) => {
+//           try {
+//             const statusResponse = await followAPI.getFollowStatus(user.id.toString());
+//             return { userId: user.id, isFollowing: statusResponse.data.isFollowing };
+//           } catch (error) {
+//             console.error(`Failed to fetch follow status for user ${user.id}`, error);
+//             return { userId: user.id, isFollowing: false };
+//           }
+//         });
+
+//         const statuses = await Promise.all(statusPromises);
+//         const statusMap: Record<number, boolean> = {};
+//         statuses.forEach(({ userId, isFollowing }) => {
+//           statusMap[userId] = isFollowing;
+//         });
+
+//         reduxDispatch(updateMultipleFollowStatuses(statusMap));
+//       }
+//     } catch (error) {
+//       console.error('Failed to fetch suggested users', error);
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchUsers();
+//   }, [reduxDispatch]);
+
+//   // Trigger refresh when current user updates their profile
+//   useEffect(() => {
+//     if (user?.profilePicture) {
+//       // Force refresh data after a short delay to allow backend updates to propagate
+//       const timer = setTimeout(() => {
+//         setRefreshTrigger(prev => prev + 1);
+//         fetchUsers(); // Re-fetch with fresh data
+//       }, 2000); // Wait 2 seconds for backend to process
+
+//       return () => clearTimeout(timer);
+//     }
+//   }, [user?.profilePicture]);
+
+//   const handleFollowToggle = async (userId: number, userName: string) => {
+//     const isCurrentlyFollowing = followStatuses[userId] || false;
+//     const actionText = isCurrentlyFollowing ? 'Unfollowing' : 'Following';
+
+//     // Optimistic update - immediately update UI
+//     reduxDispatch(updateFollowStatus({ userId, isFollowing: !isCurrentlyFollowing }));
+
+//     try {
+//       if (isCurrentlyFollowing) {
+//         await unfollowUser(userId);
+//         toast.success(`Unfollowed ${userName}`);
+//       } else {
+//         await followUser(userId);
+//         toast.success(`Followed ${userName}`);
+//       }
+//     } catch (error) {
+//       // Revert on error
+//       reduxDispatch(updateFollowStatus({ userId, isFollowing: isCurrentlyFollowing }));
+//       toast.error(`Failed to ${actionText.toLowerCase()} user`);
+//     }
+//   };
+
+//   const handleProfileClick = (userId: number) => {
+//     navigate(`/profile/${userId}`);
+//   };
+
+//   const getUserCard = (user: SuggestedUser) => {
+//     const isFollowing = followStatuses[user.id] || false;
+
+//     return (
+//       <div
+//         key={user.id}
+//         className="flex items-center justify-between gap-3"
+//       >
+//         <div
+//           className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+//           onClick={() => handleProfileClick(user.id)}
+//         >
+//           <img
+//             key={`${user.id}-${refreshTrigger}`}
+//             src={`${user.profilePicture}?t=${Date.now()}`}
+//             alt={user.name}
+//             className="w-10 h-10 rounded-full object-cover shrink-0"
+//           />
+//           <div className="flex-1 min-w-0">
+//             <p className="text-sm font-semibold text-foreground truncate">
+//               {user.name}
+//             </p>
+//             <p className="text-xs text-muted-foreground truncate">
+//               {user.username}
+//             </p>
+//           </div>
+//         </div>
+//         <Button
+//           variant={isFollowing ? 'outline' : 'default'}
+//           size="sm"
+//           onClick={() => handleFollowToggle(user.id, user.name)}
+//           className={`shrink-0 min-w-20 ${
+//             isFollowing
+//               ? 'bg-transparent border-border text-foreground hover:bg-accent'
+//               : 'bg-primary text-primary-foreground hover:bg-primary/90'
+//           }`}
+//         >
+//           {isFollowing ? 'Following' : 'Follow'}
+//         </Button>
+//       </div>
+//     );
+//   };
+
+//   return (
+//     <Card className="w-full max-w-sm bg-card border-white hover:shadow-lg transition-shadow">
+//       <CardHeader className="pb-3">
+//         <CardTitle className="text-lg font-semibold text-foreground">
+//           Suggested for you
+//         </CardTitle>
+//       </CardHeader>
+//       <CardContent className="space-y-3">
+//         {users.map(getUserCard)}
+//       </CardContent>
+//     </Card>
+//   );
+// };
+
+// export default SuggestedFriendsCard;
+
+
