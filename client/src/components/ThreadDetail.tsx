@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from './ui/card';
-import { ScrollArea } from './ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Button } from './ui/button';
 import { Heart, MessageCircle, ArrowLeft } from 'lucide-react';
@@ -45,6 +44,7 @@ interface CommentItemProps {
 const CommentItem: React.FC<CommentItemProps> = ({ comment, depth, onReplyToggle, replyingTo }) => {
   const { user } = useAuth();
   const [likesCount, setLikesCount] = useState(comment.comment_likes?.length || 0);
+  const [isLiked, setIsLiked] = useState(comment.comment_likes?.some(like => like.user_id === user?.id) || false);
   const [showReplies, setShowReplies] = useState(true);
 
   const handleToggleLike = async () => {
@@ -52,6 +52,7 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, depth, onReplyToggle
       const response = await commentsAPI.toggleCommentLike(comment.id.toString());
       if (response.code === 200) {
         setLikesCount(response.data.likesCount);
+        setIsLiked(response.data.isLiked || false);
       }
     } catch (error) {
       toast.error('Failed to like comment');
@@ -61,7 +62,7 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, depth, onReplyToggle
   // Different styling for top-level vs nested comments
   const isNested = depth > 0;
   const hasReplies = comment.replies && comment.replies.length > 0;
-  
+
   // Use conditional rendering instead of dynamic classes
   const getMarginClass = () => {
     if (depth === 0) return '';
@@ -74,16 +75,16 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, depth, onReplyToggle
     <div className={getMarginClass()}>
       {/* Comment Card */}
       <div className={`mb-3 rounded-xl transition-shadow ${
-        isNested 
-          ? 'border-l-4 border-primary bg-card/50 p-3 hover:shadow-md' 
+        isNested
+          ? 'border-l-4 border-primary bg-card/50 p-3 hover:shadow-md'
           : 'bg-card border-2 border-white p-4 hover:shadow-lg shadow-sm'
       }`}>
         <div className="flex items-start gap-3">
           {/* Avatar */}
           <Avatar className={isNested ? 'w-9 h-9' : 'w-11 h-11'}>
             <AvatarImage
-              src={(comment.user.id.toString() === user?.id && user?.profilePicture) 
-                ? `http://localhost:3000${user.profilePicture}` 
+              src={(comment.user.id.toString() === user?.id && user?.profilePicture)
+                ? `http://localhost:3000${user.profilePicture}`
                 : (comment.user.profilePicture ? `http://localhost:3000${comment.user.profilePicture}` : undefined)}
               alt={comment.user.username}
             />
@@ -127,47 +128,39 @@ const CommentItem: React.FC<CommentItemProps> = ({ comment, depth, onReplyToggle
               </div>
             )}
 
-            {/* Action Buttons */}
-            <div className="flex gap-2 flex-wrap">
+            {/* Action Buttons - Same as main thread buttons */}
+            <div className="flex items-center space-x-4 mt-3">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleToggleLike}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary/90 transition-colors text-xs font-medium text-primary-foreground h-auto"
+                className="p-0 h-auto hover:bg-transparent"
               >
-                <Heart className="w-3.5 h-3.5" />
-                <span>{likesCount}</span>
+                <Heart className={`h-4 w-4 mr-1 ${isLiked ? 'fill-current text-red-500' : ''}`} />
+                <span className="text-xs">{likesCount}</span>
               </Button>
 
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => onReplyToggle(comment.id)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary/90 transition-colors text-xs font-medium text-primary-foreground h-auto"
+                className="p-0 h-auto hover:bg-transparent"
               >
-                <MessageCircle className="w-3.5 h-3.5" />
-                <span>Reply</span>
+                <MessageCircle className="h-4 w-4 mr-1" />
+                <span className="text-xs">Reply</span>
               </Button>
 
               {hasReplies && (
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <span
                   onClick={() => setShowReplies(!showReplies)}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/80 transition-colors text-xs font-medium text-foreground h-auto"
+                  className="text-xs text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
                 >
                   {showReplies ? (
-                    <>
-                      <span>Hide Replies</span>
-                      <span className="text-xs">({comment.replies!.length})</span>
-                    </>
+                    <>Hide ({comment.replies!.length})</>
                   ) : (
-                    <>
-                      <span>View Replies</span>
-                      <span className="text-xs">({comment.replies!.length})</span>
-                    </>
+                    <>View ({comment.replies!.length})</>
                   )}
-                </Button>
+                </span>
               )}
             </div>
           </div>
@@ -312,8 +305,8 @@ const ThreadDetail: React.FC = () => {
   return (
     <div className="w-full max-w-2xl mx-auto p-4 pb-20">
       {/* Back Button */}
-      <div 
-        onClick={handleBack} 
+      <div
+        onClick={handleBack}
         className="mb-4 flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
@@ -326,8 +319,8 @@ const ThreadDetail: React.FC = () => {
           <div className="flex items-start space-x-3">
             <Avatar className="shrink-0 w-12 h-12">
               <AvatarImage
-                src={(thread.user.id.toString() === user?.id && user?.profilePicture) 
-                  ? `http://localhost:3000${user.profilePicture}` 
+                src={(thread.user.id.toString() === user?.id && user?.profilePicture)
+                  ? `http://localhost:3000${user.profilePicture}`
                   : (thread.user.profile_picture ? `http://localhost:3000${thread.user.profile_picture}` : undefined)}
                 alt={thread.user.username}
               />
@@ -354,10 +347,10 @@ const ThreadDetail: React.FC = () => {
               )}
 
               <div className="flex items-center space-x-4 mt-3">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={handleToggleLike} 
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleToggleLike}
                   className="p-0 h-auto hover:bg-transparent"
                 >
                   <Heart className={`h-4 w-4 mr-1 ${thread.isLiked ? 'fill-current text-red-500' : ''}`} />
@@ -404,349 +397,3 @@ const ThreadDetail: React.FC = () => {
 };
 
 export default ThreadDetail;
-
-// import React, { useState, useEffect } from 'react';
-// import { useNavigate } from 'react-router-dom';
-// import { Card, CardContent } from './ui/card';
-// import { ScrollArea } from './ui/scroll-area';
-// import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-// import { Button } from './ui/button';
-// import { Heart, MessageCircle, ArrowLeft } from 'lucide-react';
-// import { useAppDispatch, useAppSelector } from '../stores/hooks';
-// import { updateThreadLikeStatus, deselectThread } from '../stores/postsSlice';
-// import type { RootState } from '../stores/store';
-// import { postsAPI, commentsAPI } from '../lib/api';
-// import { toast } from 'sonner';
-// import ReplyForm from './ReplyForm';
-// import { useFetchComments, type Comment as FlatComment } from '../hooks/useFetchComments';
-// import { useAuth } from '../contexts/AuthContext';
-
-// // Extended Comment type for nested replies
-// interface NestedComment {
-//   id: number;
-//   user_id: number;
-//   thread_id: number;
-//   parent_id?: number | null;
-//   content: string;
-//   image?: string;
-//   created_at: string;
-//   updated_at: string;
-//   user: {
-//     username: string;
-//     name: string;
-//     profilePicture?: string;
-//     id: number;
-//   };
-//   replies?: NestedComment[];
-//   comment_likes?: any[];
-// }
-
-// // CommentItem Component for nested display
-// interface CommentItemProps {
-//   comment: NestedComment;
-//   depth: number;
-//   onReplyToggle: (commentId: number | null) => void;
-//   replyingTo: number | null;
-// }
-
-// const CommentItem: React.FC<CommentItemProps> = ({ comment, depth, onReplyToggle, replyingTo }) => {
-//   const { user } = useAuth();
-//   const [likesCount, setLikesCount] = useState(comment.comment_likes?.length || 0);
-
-//   const handleToggleLike = async () => {
-//     try {
-//       const response = await commentsAPI.toggleCommentLike(comment.id.toString());
-//       if (response.code === 200) {
-//         setLikesCount(response.data.likesCount);
-//       }
-//     } catch (error) {
-//       toast.error('Failed to like comment');
-//     }
-//   };
-
-//   // Different styling for top-level vs nested comments
-//   const isNested = depth > 0;
-//   const cardClasses = isNested
-//     ? `ml-16 border-l-4 border-primary/70 mb-2 py-4 px-4 rounded-xl bg-card-reply hover:shadow-md transition-shadow`
-//     : `mb-3 p-4 bg-card-reply rounded-xl border-2 border-white hover:shadow-md transition-shadow`;
-
-//   const avatarSize = isNested ? "w-10 h-10" : "w-12 h-12";
-
-//   return (
-//     <>
-//       <div className={cardClasses}>
-//         <div className="flex items-start gap-4">
-//           {/* Avatar */}
-//           <div className={`rounded-full bg-gradient-to-br from-accent to-primary flex items-center justify-center flex-shrink-0 ${avatarSize} ${isNested ? 'text-sm' : ''}`}>
-//             <Avatar className={avatarSize}>
-//               <AvatarImage
-//                 src={(comment.user.id.toString() === user?.id && user?.profilePicture) ? `http://localhost:3000${user.profilePicture}` : (comment.user.profilePicture ? `http://localhost:3000${comment.user.profilePicture}` : undefined)}
-//                 alt={comment.user.username}
-//               />
-//               <AvatarFallback className={`${isNested ? "text-xs" : "text-sm"} font-semibold`}>
-//                 {comment.user.username.slice(0, 2).toUpperCase()}
-//               </AvatarFallback>
-//             </Avatar>
-//           </div>
-
-//           <div className="flex-1">
-//             {/* User Info & Nested Badge */}
-//             <div className="flex items-center gap-2 mb-4 flex-wrap">
-//               <span className={`font-bold text-foreground ${isNested ? 'text-sm' : 'text-base'}`}>
-//                 {comment.user.name}
-//               </span>
-//               <span className="text-muted-foreground text-sm">{comment.user.username}</span>
-//               <span className="text-muted-foreground text-sm">· {new Date(comment.created_at).toLocaleDateString()}</span>
-//               {isNested && (
-//                 <span className="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full font-medium">
-//                   Nested Reply
-//                 </span>
-//               )}
-//             </div>
-
-//             {/* Content */}
-//             <p className={`text-foreground mb-3 ${isNested ? 'text-sm' : ''}`}>
-//               {comment.content}
-//             </p>
-
-//             {/* Image */}
-//             {comment.image && (
-//               <div className={`bg-muted rounded-xl p-4 flex items-center justify-center mb-3 ${isNested ? 'h-24' : 'h-32'}`}>
-//                 <img
-//                   src={`http://localhost:3000${comment.image}`}
-//                   alt="Comment image"
-//                   className="max-w-full h-full object-cover rounded-lg"
-//                 />
-//               </div>
-//             )}
-
-//             {/* Action Buttons */}
-//             <div className="flex gap-3 mb-4">
-//               <Button
-//                 variant="ghost"
-//                 size="sm"
-//                 onClick={handleToggleLike}
-//                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 transition-colors font-medium text-sm text-primary-foreground"
-//               >
-//                 <Heart className="w-4 h-4" />
-//                 <span>{likesCount}</span>
-//               </Button>
-
-//               <Button
-//                 variant="ghost"
-//                 size="sm"
-//                 onClick={() => onReplyToggle(comment.id)}
-//                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary/90 transition-colors font-medium text-sm text-primary-foreground"
-//               >
-//                 <MessageCircle className="w-4 h-4" />
-//                 <span>Reply</span>
-//               </Button>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-
-//       {/* Reply form for this comment */}
-//       {replyingTo === comment.id && (
-//         <div className={`ml-${Math.min(depth * 4, 16)} pl-4`}>
-//           <ReplyForm
-//             threadId={comment.thread_id}
-//             parentId={comment.id}
-//             onReplySuccess={() => {
-//               onReplyToggle(null);
-//               window.location.reload(); // TODO: implement proper refresh
-//             }}
-//           />
-//         </div>
-//       )}
-
-//       {/* Recursive replies */}
-//       {comment.replies && comment.replies.length > 0 && (
-//         <div className={`ml-${Math.min(depth * 4, 16)}`}>
-//           {comment.replies.map((reply) => (
-//             <CommentItem
-//               key={reply.id}
-//               comment={reply}
-//               depth={depth + 1}
-//               onReplyToggle={onReplyToggle}
-//               replyingTo={replyingTo}
-//             />
-//           ))}
-//         </div>
-//       )}
-//     </>
-//   );
-// };
-
-// const ThreadDetail: React.FC = () => {
-//   const navigate = useNavigate();
-//   const dispatch = useAppDispatch();
-//   const selectedThreadId = useAppSelector((state: RootState) => state.posts.selectedThreadId);
-
-//   const [thread, setThread] = useState<any>(null);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState<string | null>(null);
-//   const [nestedComments, setNestedComments] = useState<NestedComment[]>([]);
-//   const [replyingTo, setReplyingTo] = useState<number | null>(null);
-
-//   const { user } = useAuth();
-
-//   useEffect(() => {
-//     if (!selectedThreadId) return;
-
-//     const fetchThread = async () => {
-//       try {
-//         setLoading(true);
-//         const [threadResponse, commentsResponse] = await Promise.all([
-//           postsAPI.getPostById(selectedThreadId.toString()),
-//           commentsAPI.getCommentsByThread(selectedThreadId.toString())
-//         ]);
-
-//         if (threadResponse.code === 200) {
-//           setThread(threadResponse.data);
-//         }
-
-//         if (commentsResponse.code === 200) {
-//           setNestedComments(commentsResponse.data.comments);
-//         }
-//       } catch (err) {
-//         setError('Failed to load thread');
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchThread();
-//   }, [selectedThreadId]);
-
-//   const handleToggleLike = async () => {
-//     if (!thread) return;
-
-//     try {
-//       const response = await postsAPI.toggleLike(thread.id.toString());
-//       if (response.code === 200) {
-//         dispatch(updateThreadLikeStatus({
-//           threadId: thread.id,
-//           isLiked: response.data.isLiked,
-//           likesCount: response.data.likesCount
-//         }));
-
-//         setThread((prevThread: any) => ({
-//           ...prevThread,
-//           isLiked: response.data.isLiked,
-//           likes: response.data.likesCount
-//         }));
-//       } else {
-//         throw new Error('Failed to toggle like');
-//       }
-//     } catch (err) {
-//       toast.error('Failed to toggle like. Please try again.');
-//     }
-//   };
-
-//   const handleReplySuccess = () => {
-//     // Refresh comments after new reply
-//     if (selectedThreadId) {
-//       commentsAPI.getCommentsByThread(selectedThreadId.toString())
-//         .then(response => {
-//           if (response.code === 200) {
-//             setNestedComments(response.data.comments);
-//           }
-//         })
-//         .catch(() => toast.error('Failed to refresh comments'));
-//     }
-//   };
-
-//   const handleBack = () => {
-//     dispatch(deselectThread());
-//     navigate('/home');
-//   };
-
-//   if (loading) {
-//     return <div className="flex-1 bg-card p-4">Loading thread...</div>;
-//   }
-
-//   if (error || !thread) {
-//     return (
-//       <div className="w-full max-w-2xl mx-auto p-4">
-//         <div onClick={handleBack} className="mb-4 cursor-pointer text-muted-foreground hover:text-foreground">
-//           &larr; Back to posts
-//         </div>
-//         <p>{error || 'Thread not found'}</p>
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div className="w-full max-w-2xl mx-auto p-4">
-//       <div onClick={handleBack} className="mb-4 flex items-center cursor-pointer text-muted-foreground hover:text-foreground">
-//         <ArrowLeft className="w-4 h-4 mr-2" />
-//         Back to posts
-//       </div>
-
-//       <Card className="mb-4 bg-card-post border-2 border-white">
-//         <CardContent className="p-4 w-full">
-//           <div className="flex items-start space-x-3">
-//             <Avatar className="shrink-0">
-//               <AvatarImage
-//                 src={(thread.user.id.toString() === user?.id && user?.profilePicture) ? `http://localhost:3000${user.profilePicture}` : (thread.user.profile_picture ? `http://localhost:3000${thread.user.profile_picture}` : undefined)}
-//                 alt={thread.user.username}
-//               />
-//               <AvatarFallback>{thread.user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
-//             </Avatar>
-//             <div className="flex flex-col gap-1 flex-1 min-w-0">
-//               <div className="flex items-center space-x-2">
-//                 <span className="font-semibold text-sm">{thread.user.name}</span>
-//                 <span className="text-muted-foreground text-sm">@{thread.user.username}</span>
-//                 <span className="text-muted-foreground text-xs">· {new Date(thread.created_at).toLocaleDateString()}</span>
-//               </div>
-//               <p className="mt-2 text-sm wrap-break-word">{thread.content}</p>
-
-//               {thread.image && (
-//                 <img
-//                   src={`http://localhost:3000${thread.image}`}
-//                   alt="Post image"
-//                   className="mt-2 w-full h-auto rounded-xl object-cover"
-//                 />
-//               )}
-
-//               <div className="flex items-center space-x-4 mt-3">
-//                 <Button variant="ghost" size="sm" onClick={handleToggleLike} className="p-0 h-auto">
-//                   <Heart className={`h-4 w-4 mr-1 ${thread.isLiked ? 'fill-current text-red-500' : ''}`} />
-//                   <span className="text-xs">{thread.likes}</span>
-//                 </Button>
-//                 <Button variant="ghost" size="sm" className="p-0 h-auto">
-//                   <MessageCircle className="h-4 w-4 mr-1" />
-//                   <span className="text-xs">{thread.replies || 0}</span>
-//                 </Button>
-//               </div>
-//             </div>
-//           </div>
-//         </CardContent>
-//       </Card>
-
-//       <ReplyForm threadId={thread.id} onReplySuccess={handleReplySuccess} />
-
-//       <div className="mt-6">
-//         <h3 className="text-lg font-semibold mb-4">Replies</h3>
-//         {nestedComments.length === 0 ? (
-//           <p className="text-sm text-muted-foreground">No replies yet.</p>
-//         ) : (
-//           <ScrollArea className="max-h-96 border border-border/50 rounded-lg p-2">
-//             {nestedComments.map((comment) => (
-//               <CommentItem
-//                 key={comment.id}
-//                 comment={comment}
-//                 depth={0}
-//                 onReplyToggle={setReplyingTo}
-//                 replyingTo={replyingTo}
-//               />
-//             ))}
-//           </ScrollArea>
-//         )}
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default ThreadDetail;
