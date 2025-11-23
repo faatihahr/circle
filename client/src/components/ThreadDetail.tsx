@@ -126,16 +126,12 @@ const ThreadDetail: React.FC = () => {
               </div>
               <p className="mt-2 text-sm wrap-break-word">{thread.content}</p>
               
-              {thread.image ? (
+              {thread.image && (
                 <img
                   src={`http://localhost:3000${thread.image}`}
                   alt="Post image"
                   className="mt-2 w-full h-auto rounded-xl object-cover"
                 />
-              ) : (
-                <div className="mt-2 w-full min-h-[400px] rounded-xl bg-muted/20 flex items-center justify-center">
-                  <span className="text-muted-foreground text-sm">No image</span>
-                </div>
               )}
 
               <div className="flex items-center space-x-4 mt-3">
