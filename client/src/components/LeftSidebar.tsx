@@ -40,11 +40,8 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ onLogout }) => {
   };
 
   const handleSearchClick = () => {
-    // Reset other selections and enable search mode
-    dispatch(deselectUser());
-    dispatch(deselectThread());
-    dispatch(setSearchMode(true));
-    navigate('/home'); // Ensure we're on home page
+    // Navigate to dedicated search page
+    navigate('/search');
   };
 
   const handleNotificationsClick = () => {
