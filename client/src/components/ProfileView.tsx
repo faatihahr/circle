@@ -31,6 +31,7 @@ interface ProfileHeaderProps {
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, activeTab, setActiveTab, onEditProfile }) => {
+  const navigate = useNavigate();
   return (
     <Card className="w-full shadow-lg border-0 overflow-hidden p-0">
       <CardContent className="p-0">
@@ -68,10 +69,16 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, activeTab, setActiv
           )}
 
           <div className="flex space-x-4 text-sm mb-4">
-            <span className="text-foreground">
+            <span
+              className="text-foreground cursor-pointer hover:text-primary"
+              onClick={() => navigate('/follows?type=all-post')}
+            >
               <strong>{user.followingCount ?? 0}</strong> <span className="text-muted-foreground">Following</span>
             </span>
-            <span className="text-foreground">
+            <span
+              className="text-foreground cursor-pointer hover:text-primary"
+              onClick={() => navigate('/follows?type=media')}
+            >
               <strong>{user.followersCount ?? 0}</strong> <span className="text-muted-foreground">Followers</span>
             </span>
           </div>

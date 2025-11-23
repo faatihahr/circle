@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppDispatch } from '../stores/hooks';
 import { followAPI } from '../lib/api';
@@ -19,13 +19,19 @@ interface User {
 
 const FollowsPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const reduxDispatch = useAppDispatch();
   const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<'following' | 'followers'>('following');
   const [following, setFollowing] = useState<User[]>([]);
   const [followers, setFollowers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [followStatus, setFollowStatus] = useState<Record<number, boolean>>({});
+
+  // Get initial active tab from query params, default to 'following'
+  const typeParam = searchParams.get('type');
+  const [activeTab, setActiveTab] = useState<'following' | 'followers'>(
+    typeParam === 'followers' ? 'followers' : 'following'
+  );
 
   useEffect(() => {
     if (user?.id) {
@@ -111,6 +117,14 @@ const FollowsPage: React.FC = () => {
     }
   };
 
+  const handleTabChange = (tab: 'following' | 'followers') => {
+    setActiveTab(tab);
+    // Update query params
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.set('type', tab);
+    setSearchParams(newSearchParams);
+  };
+
   const handleLogout = async () => {
     await logout();
     navigate('/login');
@@ -192,7 +206,7 @@ const FollowsPage: React.FC = () => {
                       ? 'border-b-2 border-primary text-primary'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
-                  onClick={() => setActiveTab('following')}
+                  onClick={() => handleTabChange('following')}
                 >
                   Following ({following.length})
                 </button>
@@ -202,7 +216,7 @@ const FollowsPage: React.FC = () => {
                       ? 'border-b-2 border-primary text-primary'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
-                  onClick={() => setActiveTab('followers')}
+                  onClick={() => handleTabChange('followers')}
                 >
                   Followers ({followers.length})
                 </button>
