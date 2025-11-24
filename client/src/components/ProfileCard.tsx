@@ -22,7 +22,6 @@ const ProfileCard: React.FC<ProfileCardProps> = () => {
   useEffect(() => {
     const handleProfileUpdate = () => {
       if (isAuthenticated && !loading) {
-        // Add small delay to let backend update counts after follow/unfollow
         setTimeout(() => {
           dispatch(getProfile());
         }, 300);
