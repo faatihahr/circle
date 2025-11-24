@@ -318,7 +318,7 @@ export default function SearchView() {
     <div className="space-y-6">
       {/* Back button */}
       <div
-        onClick={() => navigate('/')}
+        onClick={() => navigate('/home')}
         className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-muted/50 transition-colors"
       >
         <ArrowLeft className="w-5 h-5" />

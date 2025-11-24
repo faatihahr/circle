@@ -18,15 +18,32 @@ const ProfileCard: React.FC<ProfileCardProps> = () => {
   const { } = useFollow();
   const { profile, loading, error, isAuthenticated } = useSelector((state: { user: UserState }) => state.user);
 
-  // Listen for profileUpdate event for internal refresh
+  // Listen for profileUpdate and followUpdate events for internal refresh
   useEffect(() => {
     const handleProfileUpdate = () => {
       if (isAuthenticated && !loading) {
-        dispatch(getProfile());
+        // Add small delay to let backend update counts after follow/unfollow
+        setTimeout(() => {
+          dispatch(getProfile());
+        }, 300);
       }
     };
+
+    const handleFollowUpdate = () => {
+      if (isAuthenticated && !loading) {
+        // Add small delay to let backend update counts after follow/unfollow
+        setTimeout(() => {
+          dispatch(getProfile());
+        }, 300);
+      }
+    };
+
     window.addEventListener('profileUpdate', handleProfileUpdate);
-    return () => window.removeEventListener('profileUpdate', handleProfileUpdate);
+    window.addEventListener('followUpdate', handleFollowUpdate);
+    return () => {
+      window.removeEventListener('profileUpdate', handleProfileUpdate);
+      window.removeEventListener('followUpdate', handleFollowUpdate);
+    };
   }, [isAuthenticated, loading, dispatch]);
 
   // Initial load

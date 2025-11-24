@@ -1,4 +1,8 @@
 import React, { createContext, useContext, useCallback } from 'react';
+import { updateFollowStatus } from '../stores/followSlice';
+import { updateFollowerCounts } from '../stores/userSlice';
+import { useAppDispatch } from '../stores/hooks';
+import { useAuth } from './AuthContext';
 
 interface FollowContextType {
   followUser: (userId: number) => Promise<void>;
@@ -9,59 +13,91 @@ interface FollowContextType {
 const FollowContext = createContext<FollowContextType | undefined>(undefined);
 
 export const FollowProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const followUser = useCallback(async (userId: number) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3000/api/follow/${userId}/follow`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+  // We need to get dispatch inside the component, but hooks can't be used at module level
+  // So we'll create a component that uses dispatch
+  const FollowContextInner = ({ children }: { children: React.ReactNode }) => {
+    const dispatch = useAppDispatch();
+    const { user: currentUser } = useAuth();
 
-      if (response.ok) {
-        window.dispatchEvent(new CustomEvent('profileUpdate'));
-        return;
+    const followUser = useCallback(async (userId: number) => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:3000/api/follow/${userId}/follow`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          // Dispatch follow events for all listeners
+          window.dispatchEvent(new CustomEvent('profileUpdate'));
+          window.dispatchEvent(new CustomEvent('followUpdate', { detail: { userId, action: 'follow' } }));
+
+          // Update Redux state immediately
+          dispatch(updateFollowStatus({ userId, isFollowing: true }));
+          dispatch(updateFollowerCounts({
+            userId: currentUser?.id || '',
+            followingDelta: 1,
+            followersDelta: 0
+          }));
+
+          return;
+        }
+        throw new Error('Failed to follow user');
+      } catch (error) {
+        console.error('Error following user:', error);
+        throw error;
       }
-      throw new Error('Failed to follow user');
-    } catch (error) {
-      console.error('Error following user:', error);
-      throw error;
-    }
-  }, []);
+    }, [dispatch]);
 
-  const unfollowUser = useCallback(async (userId: number) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3000/api/follow/${userId}/unfollow`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+    const unfollowUser = useCallback(async (userId: number) => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:3000/api/follow/${userId}/unfollow`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
 
-      if (response.ok) {
-        window.dispatchEvent(new CustomEvent('profileUpdate'));
-        return;
+        if (response.ok) {
+          // Dispatch follow events for all listeners
+          window.dispatchEvent(new CustomEvent('profileUpdate'));
+          window.dispatchEvent(new CustomEvent('followUpdate', { detail: { userId, action: 'unfollow' } }));
+
+          // Update Redux state immediately
+          dispatch(updateFollowStatus({ userId, isFollowing: false }));
+          dispatch(updateFollowerCounts({
+            userId: currentUser?.id || '',
+            followingDelta: -1,
+            followersDelta: 0
+          }));
+
+          return;
+        }
+        throw new Error('Failed to unfollow user');
+      } catch (error) {
+        console.error('Error unfollowing user:', error);
+        throw error;
       }
-      throw new Error('Failed to unfollow user');
-    } catch (error) {
-      console.error('Error unfollowing user:', error);
-      throw error;
-    }
-  }, []);
+    }, [dispatch]);
 
-  const refreshProfile = useCallback(() => {
-    window.dispatchEvent(new CustomEvent('profileUpdate'));
-  }, []);
+    const refreshProfile = useCallback(() => {
+      window.dispatchEvent(new CustomEvent('profileUpdate'));
+      window.dispatchEvent(new CustomEvent('followUpdate'));
+    }, []);
 
-  return (
-    <FollowContext.Provider value={{ followUser, unfollowUser, refreshProfile }}>
-      {children}
-    </FollowContext.Provider>
-  );
+    return (
+      <FollowContext.Provider value={{ followUser, unfollowUser, refreshProfile }}>
+        {children}
+      </FollowContext.Provider>
+    );
+  };
+
+  return <FollowContextInner>{children}</FollowContextInner>;
 };
 
 export const useFollow = () => {

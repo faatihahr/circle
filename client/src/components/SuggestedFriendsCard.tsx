@@ -79,6 +79,21 @@ const SuggestedFriendsCard: React.FC = () => {
     }
   }, [user?.profilePicture]);
 
+  // Listen for follow updates to refresh follow statuses
+  useEffect(() => {
+    const handleFollowUpdate = () => {
+      fetchUsers(); // Refresh follow statuses
+    };
+
+    window.addEventListener('followUpdate', handleFollowUpdate);
+    window.addEventListener('profileUpdate', handleFollowUpdate); // Also listen to profile updates for consistency
+
+    return () => {
+      window.removeEventListener('followUpdate', handleFollowUpdate);
+      window.removeEventListener('profileUpdate', handleFollowUpdate);
+    };
+  }, []);
+
   const handleFollowToggle = async (userId: number, userName: string) => {
     const isCurrentlyFollowing = followStatuses[userId] || false;
     const actionText = isCurrentlyFollowing ? 'Unfollowing' : 'Following';
@@ -334,5 +349,3 @@ export default SuggestedFriendsCard;
 // };
 
 // export default SuggestedFriendsCard;
-
-
