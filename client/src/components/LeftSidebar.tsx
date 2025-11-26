@@ -48,28 +48,57 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ onLogout }) => {
     navigate('/notifications');
   };
 
+  // Helper functions to check active states
+  const isHomeActive = location.pathname === '/home';
+  const isSearchActive = location.pathname === '/search';
+  const isFollowsActive = location.pathname === '/follows';
+  const isNotificationsActive = location.pathname === '/notifications';
+  const isProfileActive = location.pathname.startsWith('/profile');
+
   return (
     <aside className="w-80 bg-card overflow-y-auto md:block flex flex-col h-screen fixed left-0 border-r border-white">
       <div className="p-4 flex flex-col h-full">
         <div className="mb-4 text-6xl text-primary">circle</div>
         <nav className="space-y-2">
-          <button className="!bg-transparent !border-0 rounded-lg w-full flex items-center justify-start h-12 px-6 !text-card-foreground hover:!bg-primary/10 hover:!text-primary !transition-colors !duration-200" onClick={handleHomeClick}>
+          <button
+            className={`border-0! rounded-lg w-full flex items-center justify-start h-12 px-6 transition-colors! duration-200! ${
+              isHomeActive
+                ? 'bg-primary! text-white! hover:bg-primary/90!'
+                : 'bg-transparent! text-card-foreground! hover:bg-primary/10! hover:text-primary!'
+            }`}
+            onClick={handleHomeClick}
+          >
             <Home className="w-5 h-5 mr-2" />
             Home
           </button>
-          <button className="!bg-transparent !border-0 rounded-lg w-full flex items-center justify-start h-12 px-6 !text-card-foreground hover:!bg-primary/10 hover:!text-primary !transition-colors !duration-200" onClick={handleSearchClick}>
+          <button
+            className={`border-0! rounded-lg w-full flex items-center justify-start h-12 px-6 transition-colors! duration-200! ${
+              isSearchActive
+                ? 'bg-primary! text-white! hover:bg-primary/90!'
+                : 'bg-transparent! text-card-foreground! hover:bg-primary/10! hover:text-primary!'
+            }`}
+            onClick={handleSearchClick}
+          >
             <SearchIcon className="w-5 h-5 mr-2" />
             Search
           </button>
           <button
-            className="!bg-transparent !border-0 rounded-lg w-full flex items-center justify-start h-12 px-6 !text-card-foreground hover:!bg-primary/10 hover:!text-primary !transition-colors !duration-200"
+            className={`border-0! rounded-lg w-full flex items-center justify-start h-12 px-6 transition-colors! duration-200! ${
+              isFollowsActive
+                ? 'bg-primary! text-white! hover:bg-primary/90!'
+                : 'bg-transparent! text-card-foreground! hover:bg-primary/10! hover:text-primary!'
+            }`}
             onClick={handleFollowsClick}
           >
             <Heart className="w-5 h-5 mr-2" />
             Follows
           </button>
           <button
-            className="!bg-transparent !border-0 rounded-lg w-full flex items-center justify-start h-12 px-6 !text-card-foreground hover:!bg-primary/10 hover:!text-primary !transition-colors !duration-200 relative"
+            className={`border-0! rounded-lg w-full flex items-center justify-start h-12 px-6 transition-colors! duration-200! relative ${
+              isNotificationsActive
+                ? 'bg-primary! text-white! hover:bg-primary/90!'
+                : 'bg-transparent! text-card-foreground! hover:bg-primary/10! hover:text-primary!'
+            }`}
             onClick={handleNotificationsClick}
           >
             <Bell className="w-5 h-5 mr-2" />
@@ -81,7 +110,11 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ onLogout }) => {
             )}
           </button>
           <button
-            className="!bg-transparent !border-0 rounded-lg w-full flex items-center justify-start h-12 px-6 !text-card-foreground hover:!bg-primary/10 hover:!text-primary !transition-colors !duration-200"
+            className={`border-0! rounded-lg w-full flex items-center justify-start h-12 px-6 transition-colors! duration-200! ${
+              isProfileActive
+                ? 'bg-primary! text-white! hover:bg-primary/90!'
+                : 'bg-transparent! text-card-foreground! hover:bg-primary/10! hover:text-primary!'
+            }`}
             onClick={handleProfileClick}
           >
             <UserCircle className="w-5 h-5 mr-2" />

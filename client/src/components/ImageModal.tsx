@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 
 interface ImageModalProps {
@@ -8,6 +8,26 @@ interface ImageModalProps {
 }
 
 const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, isOpen, onClose }) => {
+  // Handle ESC key to close modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
@@ -23,12 +43,12 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, isOpen, onClose }) =>
         <X className="h-6 w-6 text-white" />
       </button>
 
-      {/* Image container */}
-      <div className="relative max-w-full max-h-full p-4">
+      {/* Image container with scroll if needed */}
+      <div className="relative flex items-center justify-center p-4 overflow-auto">
         <img
           src={imageUrl}
           alt="Full size post image"
-          className="max-w-full max-h-full object-contain cursor-default"
+          className="max-w-[95vw] max-h-[90vh] object-scale-down cursor-default rounded-lg shadow-2xl"
           onClick={(e) => e.stopPropagation()} // Prevent closing when clicking image
         />
       </div>

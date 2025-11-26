@@ -102,6 +102,8 @@ model Following {
   follower     User     @relation("Follower", fields: [follower_id], references: [id])
   following    User     @relation("Following", fields: [following_id], references: [id])
   @@unique([follower_id, following_id])
+  @@index([follower_id])
+  @@index([following_id])
 }
 
 model Notifications {

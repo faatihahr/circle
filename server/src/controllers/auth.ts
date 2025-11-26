@@ -329,19 +329,25 @@ export const getUsers = async (req: Request, res: Response) => {
     throw error;
   }
 
-  // Get users except self, limit to 5 for suggestions
-  const users = await prisma.user.findMany({
-    where: {
-      id: { not: userId as number }
-    },
-    select: {
-      id: true,
-      username: true,
-      name: true,
-      profilePicture: true,
-    },
-    take: 5, // limit to 5 suggestions
-  });
+  // Simple fallback: just return non-followed users to fix empty suggestions
+  const suggestions = await prisma.$queryRaw<Array<{ id: number; username: string; name: string | null; profilePicture: string | null }>>`
+    SELECT u.id, u.username, u.name, u."profilePicture"
+    FROM "User" u
+    WHERE u.id != ${userId}
+    AND u.id NOT IN (
+      SELECT "following_id" FROM "Following" WHERE "follower_id" = ${userId}
+    )
+    ORDER BY u.id
+    LIMIT 5
+  `;
+
+  // Transform the raw query results
+  const users = suggestions.map(suggestion => ({
+    id: suggestion.id,
+    username: suggestion.username,
+    name: suggestion.name,
+    profilePicture: suggestion.profilePicture
+  }));
 
   res.json({
     users

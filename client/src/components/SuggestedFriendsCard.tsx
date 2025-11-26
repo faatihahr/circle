@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { followAPI, authAPI } from '../lib/api';
+// import { followAPI, authAPI } from '../lib/api';
 import { updateFollowStatus, updateMultipleFollowStatuses } from '../stores/followSlice';
 import { toast } from 'sonner';
 import type { RootState } from '../stores/store';
@@ -31,30 +31,35 @@ const SuggestedFriendsCard: React.FC = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await authAPI.getUsers();
-      const fetchedUsers = response.users as SuggestedUser[];
-      
+      // Add timestamp to prevent caching
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/user/users`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch suggestions: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Suggested users response:', data); // Debug logging
+      const fetchedUsers = data.users as SuggestedUser[];
+
       // Update local state
       setUsers(fetchedUsers);
 
-      // Also refresh follow statuses in Redux
+      // Since backend now returns only non-followed users, all should show "Follow" button
+      // But let's verify with a single batch call to be safe
       if (fetchedUsers.length > 0) {
-        const statusPromises = fetchedUsers.map(async (user) => {
-          try {
-            const statusResponse = await followAPI.getFollowStatus(user.id.toString());
-            return { userId: user.id, isFollowing: statusResponse.data.isFollowing };
-          } catch (error) {
-            console.error(`Failed to fetch follow status for user ${user.id}`, error);
-            return { userId: user.id, isFollowing: false };
-          }
-        });
-
-        const statuses = await Promise.all(statusPromises);
+        const userIds = fetchedUsers.map(u => u.id);
+        // All returned users are non-followed, so set them as false
         const statusMap: Record<number, boolean> = {};
-        statuses.forEach(({ userId, isFollowing }) => {
-          statusMap[userId] = isFollowing;
+        userIds.forEach(userId => {
+          statusMap[userId] = false; // Backend guarantees these are not followed
         });
-
         reduxDispatch(updateMultipleFollowStatuses(statusMap));
       }
     } catch (error) {
