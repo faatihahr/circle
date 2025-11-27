@@ -130,7 +130,7 @@ export default function SearchView() {
       <CardContent className="p-4">
         <div className="flex items-center space-x-3">
           <Avatar className="h-12 w-12">
-            <AvatarImage src={user.profilePicture || undefined} />
+            <AvatarImage src={user.profilePicture ? `http://localhost:3000${user.profilePicture}` : undefined} />
             <AvatarFallback>{user.username[0].toUpperCase()}</AvatarFallback>
           </Avatar>
           <div className="flex-1">
@@ -240,7 +240,7 @@ export default function SearchView() {
                 onClick={() => window.location.href = `/profile/${user.id}`}
               >
                 <Avatar className="h-16 w-16 mx-auto mb-2">
-                  <AvatarImage src={user.profilePicture || undefined} />
+                  <AvatarImage src={user.profilePicture ? `http://localhost:3000${user.profilePicture}` : undefined} />
                   <AvatarFallback>{user.username[0].toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div className="text-sm font-medium truncate">
